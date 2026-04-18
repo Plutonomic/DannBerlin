@@ -9,14 +9,14 @@
   <meta property="og:type" content="website">
   <meta property="og:title" content="Dann Berlin — Portfolio">
   <meta property="og:description" content="B.Tech in Artificial Intelligence & Data Science. Passionate about building intelligent systems with expertise in LLMs, Computer Vision, and Backend Development.">
-  <meta property="og:image" content="https://opengraph.xyz/url/https://plutonomic.github.io/DannBerlin/">
+  <meta property="og:image" content="https://raw.githubusercontent.com/Plutonomic/DannBerlin/main/assets/image.png">
   <meta property="og:url" content="https://plutonomic.github.io/DannBerlin/">
   
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Dann Berlin — Portfolio">
   <meta name="twitter:description" content="B.Tech in Artificial Intelligence & Data Science. Passionate about building intelligent systems with expertise in LLMs, Computer Vision, and Backend Development.">
-  <meta name="twitter:image" content="https://opengraph.xyz/url/https://plutonomic.github.io/DannBerlin/">
+  <meta name="twitter:image" content="https://raw.githubusercontent.com/Plutonomic/DannBerlin/main/assets/image.png">
   
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
@@ -83,6 +83,19 @@ tailwind.config = {
     color: var(--text);
     font-family: 'Outfit', sans-serif;
     overflow-x: hidden;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 50%;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.5), transparent);
+    filter: blur(2px);
+    pointer-events: none;
+    z-index: 1;
   }
 
   .glass {
