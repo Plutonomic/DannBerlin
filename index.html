@@ -1,257 +1,639 @@
-<html>
-  <head>
-    <title>Personal Portfolio</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Anton&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="styles.css" />
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css"
-    />
-  </head>
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dann Berlin — Portfolio</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script><!-- FONT: Replace this Google Fonts link with your own if desired -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&amp;family=Outfit:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+  <script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      fontFamily: {
+        display: ['Outfit', 'SF Pro Display', 'sans-serif'],
+        mono: ['JetBrains Mono', 'monospace'],
+      }
+    }
+  }
+}
+</script>
+  <style>
+  /* ====== IMAGE PLACEHOLDER ======
+     Replace the CSS background below with your own image.
+     Option A: Use a URL —
+       .profile-image { background-image: url('https://your-image-url.jpg'); }
+     Option B: Embed in an <img> tag inside .profile-image container
+  */
 
-  <body class="page">
-    <div class="Home">
-      <svg
-        class="bg"
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 15.84000015258789 231.0800018310547 42.970001220703125"
-      >
-        <g
-          fill="#ffffff"
-          stroke="#fff5e6"
-          stroke-width="0.3"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          shape-rendering="geometricPrecision"
-        >
-          <g transform="translate(0, 0)">
-            <path
-              d="M0 58.81L0 15.84L11.82 15.84Q16.46 15.84 18.80 18.42Q21.14 21.00 21.14 25.95L21.14 46.07Q21.14 52.17 19.01 55.49Q16.87 58.81 11.52 58.81L0 58.81M8.64 51.22L10.13 51.22Q12.50 51.22 12.50 48.93L12.50 26.76Q12.50 24.61 11.93 23.99Q11.35 23.36 9.59 23.36L8.64 23.36L8.64 51.22Z"
-            />
+  @font-face {
+    font-family: 'Moonscape Demo';
+    src: url('assets/Moonscape Demo.otf') format('opentype');
+  }
 
-            <path
-              d="M23.49 58.81L27.64 15.84L42.21 15.84L46.29 58.81L38.16 58.81L37.55 51.88L32.37 51.88L31.84 58.81L23.49 58.81M32.98 45.02L36.89 45.02L35.01 23.17L34.62 23.17L32.98 45.02Z"
-            />
+  html, body { height: 100%; margin: 0; }
 
-            <path
-              d="M48.93 58.81L48.93 15.84L57.76 15.84L61.72 36.43L61.72 15.84L70.02 15.84L70.02 58.81L61.62 58.81L57.32 37.33L57.32 58.81L48.93 58.81Z"
-            />
+  :root {
+    --bg: #1a1410;
+    --surface: #2a1f18;
+    --text: #f5e6d3;
+    --text-secondary: #c9a876;
+    --accent: #d4a574;
+    --accent-hover: #e8b88f;
+    --accent-light: #a0714f;
+    --border: rgba(212, 165, 116, 0.15);
+    --card-shadow: 0 2px 20px rgba(0, 0, 0, 0.4);
+    --highlight: #3d2817;
+  }
 
-            <path
-              d="M73.83 58.81L73.83 15.84L82.67 15.84L86.62 36.43L86.62 15.84L94.92 15.84L94.92 58.81L86.52 58.81L82.23 37.33L82.23 58.81L73.83 58.81Z"
-            />
+  .dark {
+    --bg: #110600;
+    --surface: #2a1f18;
+    --text: #f5e6d3;
+    --text-secondary: #c9a876;
+    --accent: #d4a574;
+    --accent-hover: #e8b88f;
+    --accent-light: #a0714f;
+    --border: rgba(212, 165, 116, 0.15);
+    --card-shadow: 0 2px 20px rgba(0, 0, 0, 0.4);
+    --highlight: #3d2817;
+  }
 
-            <path
-              d="M110.45 58.81L110.45 15.84L122.09 15.84Q126.78 15.84 128.92 18.13Q131.05 20.41 131.05 25.66L131.05 27.54Q131.05 30.57 129.97 32.45Q128.88 34.33 126.66 34.91Q129.57 35.64 130.55 38.34Q131.54 41.04 131.54 44.92Q131.54 49.10 130.76 52.22Q129.98 55.35 127.93 57.08Q125.88 58.81 122.09 58.81L110.45 58.81M118.85 32.03L120.61 32.03Q121.80 32.03 122.14 31.10Q122.49 30.18 122.49 28.88L122.49 24.56Q122.49 22.49 120.65 22.49L118.85 22.49L118.85 32.03M119.70 51.25Q123.05 51.25 123.05 48.07L123.05 42.70Q123.05 40.87 122.50 39.81Q121.95 38.75 120.43 38.75L118.85 38.75L118.85 51.20Q119.38 51.25 119.70 51.25Z"
-            />
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    overflow-x: hidden;
+  }
 
-            <path
-              d="M134.38 58.81L134.38 15.84L151.56 15.84L151.56 24.15L143.12 24.15L143.12 32.52L151.22 32.52L151.22 40.60L143.12 40.60L143.12 50.44L152.12 50.44L152.12 58.81L134.38 58.81Z"
-            />
+  .glass {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: var(--card-shadow);
+  }
 
-            <path
-              d="M154.96 58.81L154.96 15.84L168.14 15.84Q171.44 15.84 173.12 17.35Q174.80 18.85 175.38 21.55Q175.95 24.24 175.95 27.88Q175.95 31.40 175.06 33.50Q174.17 35.60 171.70 36.40Q173.73 36.82 174.55 38.42Q175.37 40.01 175.37 42.55L175.37 58.81L166.89 58.81L166.89 41.99Q166.89 40.11 166.13 39.66Q165.36 39.21 163.65 39.21L163.65 58.81L154.96 58.81M163.70 31.76L165.77 31.76Q167.55 31.76 167.55 27.88Q167.55 25.37 167.16 24.58Q166.77 23.80 165.70 23.80L163.70 23.80L163.70 31.76Z"
-            />
+  /* Profile image — shared across sections via cloning */
+  .profile-image {
+    /* ====== YOUR IMAGE HERE ====== */
+       /* Replace this gradient with your photo URL: */
+       background-image: url("assets/img_dann.jpg");
+       background-size: cover;
+       background-position: center;
+       background-repeat: no-repeat;
+       
+       /* Supported formats: JPG, PNG, TIFF (convert to JPG first), WebP
+       HTTPS URLs required. Use online converter for TIFF files. */
+   
+    border-radius: 50%;
+    position: relative;
+    overflow: hidden;
+    border: 4px solid var(--surface);
+    box-shadow: 0 0 0 2px var(--accent), 0 8px 32px rgba(160, 113, 79, 0.2);
+  }
 
-            <path
-              d="M178.78 58.81L178.78 15.84L187.38 15.84L187.38 51.49L196.22 51.49L196.22 58.81L178.78 58.81Z"
-            />
+  .profile-image::after {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    width: auto;
+    height: auto;  
+    justify-content: center;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    color: white;
+    font-size: inherit;
+    background: linear-gradient(135deg, rgba(160, 113, 79, 0.4), rgba(212, 165, 116, 0.3));
+  }
 
-            <path
-              d="M198.27 58.81L198.27 15.84L206.57 15.84L206.57 58.81L198.27 58.81Z"
-            />
+  /* Section animations */
+  .section-block {
+    opacity: 0;
+    transform: translateY(60px);
+    transition: opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  .section-block.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
 
-            <path
-              d="M209.99 58.81L209.99 15.84L218.82 15.84L222.78 36.43L222.78 15.84L231.08 15.84L231.08 58.81L222.68 58.81L218.38 37.33L218.38 58.81L209.99 58.81Z"
-            />
-          </g>
-        </g>
-      </svg>
-      <div class="container">
-        <img src="./assets/img_port.png" alt="Dann_Image" />
+  /* Stagger children */
+  .stagger-child {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .stagger-child.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Nav blur */
+  .nav-blur {
+    backdrop-filter: saturate(180%) blur(20px);
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--bg) 72%, transparent));
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Smooth scroll */
+  html { scroll-behavior: smooth; }
+
+  /* Custom scrollbar */
+  #app {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(212, 165, 116, 0.65) transparent;
+  }
+  #app::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  #app::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  #app::-webkit-scrollbar-thumb {
+    background: rgba(212, 165, 116, 0.65);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  #app::-webkit-scrollbar-thumb:hover {
+    background: rgba(212, 165, 116, 0.85);
+  }
+
+  /* Skill pill */
+  .skill-pill {
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
+    transition: all 0.3s ease;
+  }
+  .skill-pill:hover {
+    background: color-mix(in srgb, var(--accent) 20%, transparent);
+    transform: translateY(-2px);
+  }
+
+  /* Timeline */
+  .timeline-line {
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--accent), color-mix(in srgb, var(--accent) 20%, transparent));
+  }
+  .timeline-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 3px solid var(--bg);
+    position: absolute;
+    left: 10px;
+    top: 6px;
+    z-index: 2;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+
+  /* Hero floating image */
+  @keyframes floatY {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+  .float-anim {
+    animation: floatY 4s ease-in-out infinite;
+  }
+
+  /* Link hover */
+  a.accent-link {
+    color: var(--accent);
+    text-decoration: none;
+    transition: opacity 0.2s;
+  }
+  a.accent-link:hover { opacity: 0.7; }
+
+  /* Card hover */
+  .hover-lift {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+  }
+
+  .dark .hover-lift:hover {
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+  }
+
+  /* Active nav indicator */
+  .nav-link {
+    position: relative;
+    color: var(--text-secondary);
+    transition: color 0.3s;
+  }
+  .nav-link.active { color: var(--text); }
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: var(--accent);
+    transition: all 0.3s;
+    transform: translateX(-50%);
+    border-radius: 1px;
+  }
+  .nav-link.active::after { width: 100%; }
+
+  /* Section image transition */
+  .section-profile-img {
+    transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+</style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div id="app" class="w-full h-full overflow-auto" style="background: var(--bg); color: var(--text);">
+   <!-- NAV -->
+   <nav id="main-nav" class="nav-blur fixed top-0 left-0 right-0 z-50 transition-all duration-300">
+    <div class="max-w-5xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between">
+     <div id="nav-name" class="profile-image w-10 h-10 sm:w-11 sm:h-11 flex-shrink-0" style="font-size: 0.75rem;"></div>
+     <div class="flex items-center gap-3 sm:gap-6">
+      <a href="#hero" class="nav-link active text-xs font-medium font-display hidden sm:block">Home</a> <a href="#about" class="nav-link text-xs font-medium font-display hidden sm:block">About</a> <a href="#skills" class="nav-link text-xs font-medium font-display hidden sm:block">Skills</a> <a href="#experience" class="nav-link text-xs font-medium font-display hidden sm:block">Work</a> <a href="#projects" class="nav-link text-xs font-medium font-display hidden sm:block">Projects</a> <a href="#contact" class="nav-link text-xs font-medium font-display hidden sm:block">Contact</a>
+     </div>
+    </div>
+   </nav><!-- ====== HERO ====== -->
+   <section id="hero" class="section-block min-h-full flex items-center justify-center px-4 pt-20 pb-12 sm:pt-16">
+    <div class="max-w-3xl mx-auto text-center w-full">
+     <div class="float-anim mx-auto mb-6 profile-image w-24 h-24 sm:w-32 sm:h-32 lg:w-36 lg:h-36" style="font-size: 2rem;"></div>
+     <p class="text-xs font-mono tracking-widest uppercase mb-2 sm:mb-3" style="color: var(--accent);">AI/ML Developer</p>
+     <h1 id="hero-name" class="font-display font-bold text-3xl sm:text-5xl lg:text-6xl tracking-tight leading-tight mb-3 sm:mb-4" style="color: var(--text); font-family: 'SF Pro Display', 'Outfit', sans-serif; letter-spacing: 0.08em;">Dann Berlin</h1>
+     <p id="hero-tagline" class="font-display text-xs sm:text-base lg:text-lg max-w-2xl mx-auto mb-6 sm:mb-8" style="color: var(--text-secondary);">Building intelligent systems with AI/ML. Specializing in LLMs, Computer Vision, and Backend Development.</p>
+     <div class="flex flex-wrap justify-center gap-2 sm:gap-3">
+      <a href="#contact" class="inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium text-white transition-all" style="background: var(--accent);"> <i data-lucide="mail" class="w-4 h-4"></i> <span class="hidden sm:inline">Get in Touch</span><span class="sm:hidden">Contact</span> </a> <a href="#projects" class="inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium transition-all" style="background: var(--border); color: var(--text);"> <i data-lucide="briefcase" class="w-4 h-4"></i> <span class="hidden sm:inline">View Work</span><span class="sm:hidden">Projects</span> </a>
+     </div>
+    </div>
+   </section><!-- ====== ABOUT ====== -->
+   <section id="about" class="section-block px-3 sm:px-4 py-12 sm:py-16 lg:py-24">
+    <div class="max-w-3xl mx-auto">
+     <div class="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-10 hover-lift">
+      <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
+       <div class="profile-image w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 flex-shrink-0 section-profile-img" style="font-size: 1.2rem;"></div>
+       <div class="text-center sm:text-left w-full">
+        <h2 class="font-display font-semibold text-xl sm:text-2xl lg:text-3xl mb-1" style="color: var(--text);">About Me</h2>
+        <p class="font-mono text-xs mb-3 sm:mb-4" style="color: var(--accent);">AI/ML Developer</p>
+        <p id="about-text" class="text-xs sm:text-sm leading-relaxed mb-3 sm:mb-4" style="color: var(--text-secondary);">B.Tech in Artificial Intelligence &amp; Data Science (CGPA: 8.39). Passionate about building intelligent systems with expertise in LLMs, Computer Vision, and Backend Development. Currently working at Exalca Technologies as an AI/ML Python Developer, focusing on Transformer models, document understanding, and fine-tuning large language models. Strong foundation in Neural Networks, Image Processing, and AI model deployment.</p>
+        <div class="flex flex-wrap justify-center sm:justify-start gap-2 sm:gap-3 text-xs" style="color: var(--text-secondary);">
+         <span class="flex items-center gap-1"><i data-lucide="map-pin" class="w-3 h-3"></i> <span class="hidden sm:inline">Nagercoil, TN</span><span class="sm:hidden">TN, India</span></span> <span class="flex items-center gap-1"><i data-lucide="graduation-cap" class="w-3 h-3"></i> <span class="hidden sm:inline">B.Tech AI &amp; DS</span><span class="sm:hidden">CGPA: 8.42</span></span> <span class="flex items-center gap-1"><i data-lucide="briefcase" class="w-3 h-3"></i> <span class="hidden sm:inline">AI/ML Developer</span><span class="sm:hidden">Developer</span></span>
+        </div>
+       </div>
       </div>
-      <svg
-        class="fg"
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 15.84000015258789 231.0800018310547 42.970001220703125"
-      >
-        <g
-          fill="none"
-          stroke="#fff5e6"
-          stroke-width="0.3"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          shape-rendering="geometricPrecision"
-        >
-          <g transform="translate(0, 0)">
-            <path
-              d="M0 58.81L0 15.84L11.82 15.84Q16.46 15.84 18.80 18.42Q21.14 21.00 21.14 25.95L21.14 46.07Q21.14 52.17 19.01 55.49Q16.87 58.81 11.52 58.81L0 58.81M8.64 51.22L10.13 51.22Q12.50 51.22 12.50 48.93L12.50 26.76Q12.50 24.61 11.93 23.99Q11.35 23.36 9.59 23.36L8.64 23.36L8.64 51.22Z"
-            />
-
-            <path
-              d="M23.49 58.81L27.64 15.84L42.21 15.84L46.29 58.81L38.16 58.81L37.55 51.88L32.37 51.88L31.84 58.81L23.49 58.81M32.98 45.02L36.89 45.02L35.01 23.17L34.62 23.17L32.98 45.02Z"
-            />
-
-            <path
-              d="M48.93 58.81L48.93 15.84L57.76 15.84L61.72 36.43L61.72 15.84L70.02 15.84L70.02 58.81L61.62 58.81L57.32 37.33L57.32 58.81L48.93 58.81Z"
-            />
-
-            <path
-              d="M73.83 58.81L73.83 15.84L82.67 15.84L86.62 36.43L86.62 15.84L94.92 15.84L94.92 58.81L86.52 58.81L82.23 37.33L82.23 58.81L73.83 58.81Z"
-            />
-
-            <path
-              d="M110.45 58.81L110.45 15.84L122.09 15.84Q126.78 15.84 128.92 18.13Q131.05 20.41 131.05 25.66L131.05 27.54Q131.05 30.57 129.97 32.45Q128.88 34.33 126.66 34.91Q129.57 35.64 130.55 38.34Q131.54 41.04 131.54 44.92Q131.54 49.10 130.76 52.22Q129.98 55.35 127.93 57.08Q125.88 58.81 122.09 58.81L110.45 58.81M118.85 32.03L120.61 32.03Q121.80 32.03 122.14 31.10Q122.49 30.18 122.49 28.88L122.49 24.56Q122.49 22.49 120.65 22.49L118.85 22.49L118.85 32.03M119.70 51.25Q123.05 51.25 123.05 48.07L123.05 42.70Q123.05 40.87 122.50 39.81Q121.95 38.75 120.43 38.75L118.85 38.75L118.85 51.20Q119.38 51.25 119.70 51.25Z"
-            />
-
-            <path
-              d="M134.38 58.81L134.38 15.84L151.56 15.84L151.56 24.15L143.12 24.15L143.12 32.52L151.22 32.52L151.22 40.60L143.12 40.60L143.12 50.44L152.12 50.44L152.12 58.81L134.38 58.81Z"
-            />
-
-            <path
-              d="M154.96 58.81L154.96 15.84L168.14 15.84Q171.44 15.84 173.12 17.35Q174.80 18.85 175.38 21.55Q175.95 24.24 175.95 27.88Q175.95 31.40 175.06 33.50Q174.17 35.60 171.70 36.40Q173.73 36.82 174.55 38.42Q175.37 40.01 175.37 42.55L175.37 58.81L166.89 58.81L166.89 41.99Q166.89 40.11 166.13 39.66Q165.36 39.21 163.65 39.21L163.65 58.81L154.96 58.81M163.70 31.76L165.77 31.76Q167.55 31.76 167.55 27.88Q167.55 25.37 167.16 24.58Q166.77 23.80 165.70 23.80L163.70 23.80L163.70 31.76Z"
-            />
-
-            <path
-              d="M178.78 58.81L178.78 15.84L187.38 15.84L187.38 51.49L196.22 51.49L196.22 58.81L178.78 58.81Z"
-            />
-
-            <path
-              d="M198.27 58.81L198.27 15.84L206.57 15.84L206.57 58.81L198.27 58.81Z"
-            />
-
-            <path
-              d="M209.99 58.81L209.99 15.84L218.82 15.84L222.78 36.43L222.78 15.84L231.08 15.84L231.08 58.81L222.68 58.81L218.38 37.33L218.38 58.81L209.99 58.81Z"
-            />
-          </g>
-        </g>
-      </svg>
+     </div>
     </div>
-
-    <div class="NavigationBar">
-      <ul>
-        <li class="icon">
-          <a href="">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                fill-rule="evenodd"
-                clip-rule="evenodd"
-                d="M21 8.77217L14.0208 1.79299C12.8492 0.621414 10.9497 0.621413 9.77817 1.79299L3 8.57116V23.0858H10V17.0858C10 15.9812 10.8954 15.0858 12 15.0858C13.1046 15.0858 14 15.9812 14 17.0858V23.0858H21V8.77217ZM11.1924 3.2072L5 9.39959V21.0858H8V17.0858C8 14.8767 9.79086 13.0858 12 13.0858C14.2091 13.0858 16 14.8767 16 17.0858V21.0858H19V9.6006L12.6066 3.2072C12.2161 2.81668 11.5829 2.81668 11.1924 3.2072Z"
-                fill="currentColor"
-              />
-            </svg>
-
-            <span class="label_nav">Home</span>
-          </a>
-        </li>
-
-        <li class="icon">
-          <a>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <circle cx="12" cy="8" r="7" />
-              <polyline points="8.21 13.89 7 22 12 17 17 22 15.79 13.88" />
-            </svg>
-            <span class="label_nav"> Achievement </span>
-          </a>
-        </li>
-        <li class="icon">
-          <a>
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                fill-rule="evenodd"
-                clip-rule="evenodd"
-                d="M4 5.5H9C10.1046 5.5 11 6.39543 11 7.5V16.5C11 17.0523 10.5523 17.5 10 17.5H4C3.44772 17.5 3 17.0523 3 16.5V6.5C3 5.94772 3.44772 5.5 4 5.5ZM14 19.5C13.6494 19.5 13.3128 19.4398 13 19.3293V19.5C13 20.0523 12.5523 20.5 12 20.5C11.4477 20.5 11 20.0523 11 19.5V19.3293C10.6872 19.4398 10.3506 19.5 10 19.5H4C2.34315 19.5 1 18.1569 1 16.5V6.5C1 4.84315 2.34315 3.5 4 3.5H9C10.1947 3.5 11.2671 4.02376 12 4.85418C12.7329 4.02376 13.8053 3.5 15 3.5H20C21.6569 3.5 23 4.84315 23 6.5V16.5C23 18.1569 21.6569 19.5 20 19.5H14ZM13 7.5V16.5C13 17.0523 13.4477 17.5 14 17.5H20C20.5523 17.5 21 17.0523 21 16.5V6.5C21 5.94772 20.5523 5.5 20 5.5H15C13.8954 5.5 13 6.39543 13 7.5ZM5 7.5H9V9.5H5V7.5ZM15 7.5H19V9.5H15V7.5ZM19 10.5H15V12.5H19V10.5ZM5 10.5H9V12.5H5V10.5ZM19 13.5H15V15.5H19V13.5ZM5 13.5H9V15.5H5V13.5Z"
-                fill="currentColor"
-              />
-            </svg>
-            <span class="label_nav"> Education </span>
-          </a>
-        </li>
-
-        <li class="icon">
-          <a href="">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M1.41421 16.4322L0 15.018L7.07107 7.94693L13.435 14.3109L17.6777 10.0682L15.9353 8.32587L22.6274 6.53271L20.8343 13.2248L19.0919 11.4825L13.435 17.1393L7.07107 10.7754L1.41421 16.4322Z"
-                fill="currentColor"
-              />
-            </svg>
-
-            <span class="label_nav"> Skill </span>
-          </a>
-        </li>
-
-        <li class="icon">
-          <a href="">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-            <p class="label_nav">About</p>
-          </a>
-        </li>
-
-        <li class="icon">
-          <a href="">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M14 6C14 7.10457 13.1046 8 12 8C10.8954 8 10 7.10457 10 6C10 4.89543 10.8954 4 12 4C13.1046 4 14 4.89543 14 6Z"
-                fill="currentColor"
-              />
-              <path
-                d="M14 12C14 13.1046 13.1046 14 12 14C10.8954 14 10 13.1046 10 12C10 10.8954 10.8954 10 12 10C13.1046 10 14 10.8954 14 12Z"
-                fill="currentColor"
-              />
-              <path
-                d="M14 18C14 19.1046 13.1046 20 12 20C10.8954 20 10 19.1046 10 18C10 16.8954 10.8954 16 12 16C13.1046 16 14 16.8954 14 18Z"
-                fill="currentColor"
-              />
-            </svg>
-            <span class="label_nav"> More </span>
-          </a>
-        </li>
-      </ul>
+   </section><!-- ====== SKILLS ====== -->
+   <section id="skills" class="section-block px-3 sm:px-4 py-12 sm:py-16 lg:py-24">
+    <div class="max-w-3xl mx-auto">
+     <div class="text-center mb-8 sm:mb-10">
+      <div class="profile-image w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 mx-auto mb-3 sm:mb-4 section-profile-img" style="font-size: 0.9rem;"></div>
+      <h2 class="font-display font-semibold text-xl sm:text-2xl lg:text-3xl" style="color: var(--text);">Skills &amp; Tools</h2>
+     </div>
+     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+      <!-- AI/ML -->
+      <div class="glass rounded-xl sm:rounded-2xl p-4 sm:p-5 hover-lift">
+       <div class="flex items-center gap-2 mb-3">
+        <i data-lucide="brain" class="w-4 h-4 sm:w-5 sm:h-5" style="color: var(--accent);"></i>
+        <h3 class="font-display font-semibold text-xs sm:text-sm" style="color: var(--text);">AI/ML</h3>
+       </div>
+       <div class="flex flex-wrap gap-2">
+        <span class="skill-pill text-xs px-2 sm:px-3 py-1 rounded-full">Neural Networks</span> <span class="skill-pill text-xs px-2 sm:px-3 py-1 rounded-full">Computer Vision</span> <span class="skill-pill text-xs px-2 sm:px-3 py-1 rounded-full">LLMs</span> <span class="skill-pill text-xs px-2 sm:px-3 py-1 rounded-full">Transformers</span> <span class="skill-pill text-xs px-2 sm:px-3 py-1 rounded-full">NLP</span>
+       </div>
+      </div><!-- Languages & Frameworks -->
+      <div class="glass rounded-xl sm:rounded-2xl p-4 sm:p-5 hover-lift">
+       <div class="flex items-center gap-2 mb-3">
+        <i data-lucide="code" class="w-4 h-4 sm:w-5 sm:h-5" style="color: var(--accent);"></i>
+        <h3 class="font-display font-semibold text-xs sm:text-sm" style="color: var(--text);">Languages &amp; Backend</h3>
+       </div>
+       <div class="flex flex-wrap gap-2">
+        <span class="skill-pill text-xs px-2 sm:px-3 py-1 rounded-full">Python</span> <span class="skill-pill text-xs px-2 sm:px-3 py-1 rounded-full">Django</span> <span class="skill-pill text-xs px-2 sm:px-3 py-1 rounded-full">FastAPI</span> <span class="skill-pill text-xs px-2 sm:px-3 py-1 rounded-full">Linux</span> <span class="skill-pill text-xs px-2 sm:px-3 py-1 rounded-full">Windows</span>
+       </div>
+      </div><!-- Model & Tools -->
+      <div class="glass rounded-xl sm:rounded-2xl p-4 sm:p-5 hover-lift">
+       <div class="flex items-center gap-2 mb-3">
+        <i data-lucide="zap" class="w-4 h-4 sm:w-5 sm:h-5" style="color: var(--accent);"></i>
+        <h3 class="font-display font-semibold text-xs sm:text-sm" style="color: var(--text);">Models &amp; Tools</h3>
+       </div>
+       <div class="flex flex-wrap gap-2">
+        <span class="skill-pill text-xs px-2 sm:px-3 py-1 rounded-full">Quantization</span> <span class="skill-pill text-xs px-2 sm:px-3 py-1 rounded-full">LLM</span> <span class="skill-pill text-xs px-2 sm:px-3 py-1 rounded-full">HuggingFace</span> <span class="skill-pill text-xs px-2 sm:px-3 py-1 rounded-full">Ollama</span> <span class="skill-pill text-xs px-2 sm:px-3 py-1 rounded-full">Fine-tuning</span>
+       </div>
+      </div><!-- Specialization -->
+      <div class="glass rounded-xl sm:rounded-2xl p-4 sm:p-5 hover-lift">
+       <div class="flex items-center gap-2 mb-3">
+        <i data-lucide="layers" class="w-4 h-4 sm:w-5 sm:h-5" style="color: var(--accent);"></i>
+        <h3 class="font-display font-semibold text-xs sm:text-sm" style="color: var(--text);">Specialization</h3>
+       </div>
+       <div class="flex flex-wrap gap-2">
+        <span class="skill-pill text-xs px-2 sm:px-3 py-1 rounded-full">Document Understanding</span> <span class="skill-pill text-xs px-2 sm:px-3 py-1 rounded-full">Model Quantization</span> <span class="skill-pill text-xs px-2 sm:px-3 py-1 rounded-full">Image Processing</span> <span class="skill-pill text-xs px-2 sm:px-3 py-1 rounded-full">Sentiment Analysis</span>
+       </div>
+      </div>
+     </div>
     </div>
-    <div>
-      <h1>Hello You!</h1>
+   </section><!-- ====== EXPERIENCE ====== -->
+   <section id="experience" class="section-block px-4 py-16 sm:py-24">
+    <div class="max-w-3xl mx-auto">
+     <div class="text-center mb-10">
+      <div class="profile-image w-14 h-14 mx-auto mb-4 section-profile-img" style="font-size: 1rem;"></div>
+      <h2 class="font-display font-semibold text-2xl sm:text-3xl" style="color: var(--text);">Experience</h2>
+     </div>
+     <div class="relative pl-10">
+      <div class="timeline-line"></div><!-- Current Role -->
+      <div class="relative mb-8 stagger-child">
+       <div class="timeline-dot"></div>
+       <div class="glass rounded-2xl p-5 hover-lift">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-2">
+         <h3 class="font-display font-semibold text-sm" style="color: var(--text);">AI/ML Based Python Developer</h3><span class="font-mono text-xs" style="color: var(--accent);">Current</span>
+        </div>
+        <p class="text-xs font-medium mb-2" style="color: var(--text-secondary);">Exalca Technologies Private Limited, Bangalore</p>
+        <p class="text-xs leading-relaxed mb-3" style="color: var(--text-secondary);">Building intelligent systems using Transformer models and large language models. Specializing in document understanding, model fine-tuning, and quantization techniques.</p>
+        <div class="flex flex-wrap gap-2">
+         <span class="skill-pill text-xs px-2 sm:px-3 py-1 rounded-full">Transformers</span> <span class="skill-pill text-xs px-2 sm:px-3 py-1 rounded-full">HuggingFace</span> <span class="skill-pill text-xs px-2 sm:px-3 py-1 rounded-full">Django</span> <span class="skill-pill text-xs px-2 sm:px-3 py-1 rounded-full">FastAPI</span> <span class="skill-pill text-xs px-2 sm:px-3 py-1 rounded-full">Fine-tuning</span> <span class="skill-pill text-xs px-2 sm:px-3 py-1 rounded-full">Quantization</span>
+        </div>
+       </div>
+      </div><!-- Ak Infopark -->
+      <div class="relative mb-8 stagger-child">
+       <div class="timeline-dot"></div>
+       <div class="glass rounded-2xl p-5 hover-lift">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-2">
+         <h3 class="font-display font-semibold text-sm" style="color: var(--text);">AI/ML Intern</h3><span class="font-mono text-xs" style="color: var(--accent);">Jun – Jul 2025</span>
+        </div>
+        <p class="text-xs font-medium mb-2" style="color: var(--text-secondary);">Ak Infopark, Nagercoil</p>
+        <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">Developed an AI model to help buyers estimate apartment flat prices.</p>
+       </div>
+      </div><!-- G-tec -->
+      <div class="relative mb-8 stagger-child">
+       <div class="timeline-dot"></div>
+       <div class="glass rounded-2xl p-5 hover-lift">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-2">
+         <h3 class="font-display font-semibold text-sm" style="color: var(--text);">AI Intern</h3><span class="font-mono text-xs" style="color: var(--accent);">Jan – Feb 2025</span>
+        </div>
+        <p class="text-xs font-medium mb-2" style="color: var(--text-secondary);">G-tec Education Institution, Kanyakumari</p>
+        <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">Built a Telegram bot for document sharing &amp; storage using Telegram cloud (unlimited storage) for institutions.</p>
+       </div>
+      </div><!-- Rinex -->
+      <div class="relative mb-8 stagger-child">
+       <div class="timeline-dot"></div>
+       <div class="glass rounded-2xl p-5 hover-lift">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-2">
+         <h3 class="font-display font-semibold text-sm" style="color: var(--text);">AI Intern</h3><span class="font-mono text-xs" style="color: var(--accent);">Jul – Aug 2024</span>
+        </div>
+        <p class="text-xs font-medium mb-2" style="color: var(--text-secondary);">Rinex Education Institution, Bangalore</p>
+        <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">Emotion detection using Sentiment Analysis — built an SOS alert system triggered by detected emotions.</p>
+       </div>
+      </div><!-- Certification -->
+      <div class="relative stagger-child">
+       <div class="timeline-dot"></div>
+       <div class="glass rounded-2xl p-5 hover-lift">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-2">
+         <h3 class="font-display font-semibold text-sm" style="color: var(--text);">Python in AI — A+ Grade</h3><span class="font-mono text-xs" style="color: var(--accent);">Jun – Jul 2024</span>
+        </div>
+        <p class="text-xs font-medium mb-2" style="color: var(--text-secondary);">Rinex Education / Google / NSDCA</p>
+        <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">2-month Python course + 1-month internship certified by National Skill Development &amp; Certification Authority, education partner Google.</p>
+       </div>
+      </div>
+     </div>
     </div>
-  </body>
+   </section><!-- ====== PROJECTS ====== -->
+   <section id="projects" class="section-block px-3 sm:px-4 py-12 sm:py-16 lg:py-24">
+    <div class="max-w-3xl mx-auto">
+     <div class="text-center mb-8 sm:mb-10">
+      <div class="profile-image w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 mx-auto mb-3 sm:mb-4 section-profile-img" style="font-size: 0.9rem;"></div>
+      <h2 class="font-display font-semibold text-xl sm:text-2xl lg:text-3xl" style="color: var(--text);">Projects &amp; Research</h2>
+     </div>
+     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+      <div class="glass rounded-xl sm:rounded-2xl p-4 sm:p-5 hover-lift stagger-child">
+       <div class="flex items-center gap-2 mb-3">
+        <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center" style="background: color-mix(in srgb, var(--accent) 15%, transparent);">
+         <i data-lucide="smartphone" class="w-3 h-3 sm:w-4 sm:h-4" style="color: var(--accent);"></i>
+        </div>
+        <h3 class="font-display font-semibold text-xs sm:text-sm" style="color: var(--text);">Emotion Detection SOS System</h3>
+       </div>
+       <p class="text-xs leading-relaxed mb-2 sm:mb-3" style="color: var(--text-secondary);">Sentiment analysis model detecting emotions with SOS alert trigger. Implemented NLP techniques for real-time emotion detection in text.</p><span class="font-mono text-xs" style="color: var(--accent);">Rinex • Jul 2024</span>
+      </div>
+      <div class="glass rounded-xl sm:rounded-2xl p-4 sm:p-5 hover-lift stagger-child">
+       <div class="flex items-center gap-2 mb-3">
+        <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center" style="background: color-mix(in srgb, var(--accent) 15%, transparent);">
+         <i data-lucide="layout" class="w-3 h-3 sm:w-4 sm:h-4" style="color: var(--accent);"></i>
+        </div>
+        <h3 class="font-display font-semibold text-xs sm:text-sm" style="color: var(--text);">Telegram Document Bot</h3>
+       </div>
+       <p class="text-xs leading-relaxed mb-2 sm:mb-3" style="color: var(--text-secondary);">Cloud-based document sharing and storage bot for institutions. Leveraged Telegram cloud API for unlimited storage capabilities.</p><span class="font-mono text-xs" style="color: var(--accent);">G-tec • Jan 2025</span>
+      </div>
+      <div class="glass rounded-xl sm:rounded-2xl p-4 sm:p-5 hover-lift stagger-child">
+       <div class="flex items-center gap-2 mb-3">
+        <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center" style="background: color-mix(in srgb, var(--accent) 15%, transparent);">
+         <i data-lucide="globe" class="w-3 h-3 sm:w-4 sm:h-4" style="color: var(--accent);"></i>
+        </div>
+        <h3 class="font-display font-semibold text-xs sm:text-sm" style="color: var(--text);">Apartment Price Prediction</h3>
+       </div>
+       <p class="text-xs leading-relaxed mb-2 sm:mb-3" style="color: var(--text-secondary);">Machine learning model for real estate price estimation. Developed predictive model to assist buyers in estimating apartment flat prices.</p><span class="font-mono text-xs" style="color: var(--accent);">Ak Infopark • Jun 2025</span>
+      </div>
+      <div class="glass rounded-xl sm:rounded-2xl p-4 sm:p-5 hover-lift stagger-child">
+       <div class="flex items-center gap-2 mb-3">
+        <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center" style="background: color-mix(in srgb, var(--accent) 15%, transparent);">
+         <i data-lucide="users" class="w-3 h-3 sm:w-4 sm:h-4" style="color: var(--accent);"></i>
+        </div>
+        <h3 class="font-display font-semibold text-xs sm:text-sm" style="color: var(--text);">ReStocket Inventory System</h3>
+       </div>
+       <p class="text-xs leading-relaxed mb-2 sm:mb-3" style="color: var(--text-secondary);">Inventory management platform for dealers. Designed to address supply tracking challenges and reduce losses in retail operations.</p><span class="font-mono text-xs" style="color: var(--accent);">Loyola • 2024 – Present</span>
+      </div>
+     </div>
+    </div>
+   </section><!-- ====== CONTACT ====== -->
+   <section id="contact" class="section-block px-3 sm:px-4 py-12 sm:py-16 lg:py-24 pb-20 sm:pb-24">
+    <div class="max-w-3xl mx-auto text-center">
+     <div class="profile-image w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 mx-auto mb-4 sm:mb-6 section-profile-img" style="font-size: 1.2rem;"></div>
+     <h2 class="font-display font-semibold text-xl sm:text-2xl lg:text-3xl mb-2" style="color: var(--text);">Let's Connect</h2>
+     <p class="text-xs sm:text-sm mb-6 sm:mb-8" style="color: var(--text-secondary);">Theory: The foundation beyond practice!.</p>
+     <div class="flex flex-wrap justify-center gap-2 sm:gap-3">
+      <a href="mailto:dannberlin11@gmail.com" target="_blank" rel="noopener noreferrer" aria-label="Email Dann Berlin" class="glass rounded-lg sm:rounded-xl px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-center hover-lift"> <i data-lucide="mail" class="w-4 h-4 sm:w-5 sm:h-5" style="color: var(--accent);"></i> <span class="sr-only">Email Dann Berlin</span> </a>
+      <a href="tel:+916382915038" aria-label="Call Dann Berlin" class="glass rounded-lg sm:rounded-xl px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-center hover-lift"> <i data-lucide="phone" class="w-4 h-4 sm:w-5 sm:h-5" style="color: var(--accent);"></i> <span class="sr-only">Call Dann Berlin</span> </a>
+      <div class="glass rounded-lg sm:rounded-xl px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-center hover-lift" aria-label="Location Nagercoil, TN"> <i data-lucide="map-pin" class="w-4 h-4 sm:w-5 sm:h-5" style="color: var(--accent);"></i> <span class="sr-only">Nagercoil, TN</span> </div>
+     </div>
+     <div class="flex flex-wrap justify-center gap-2 sm:gap-3 mt-4">
+      <a href="https://www.instagram.com/plutonomic/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="glass rounded-lg sm:rounded-xl px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-center hover-lift"> <i data-lucide="instagram" class="w-4 h-4 sm:w-5 sm:h-5" style="color: var(--accent);"></i> <span class="sr-only">Instagram</span> </a>
+      <a href="https://github.com/Plutonomic" target="_blank" rel="noopener noreferrer" aria-label="GitHub" class="glass rounded-lg sm:rounded-xl px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-center hover-lift"> <i data-lucide="github" class="w-4 h-4 sm:w-5 sm:h-5" style="color: var(--accent);"></i> <span class="sr-only">GitHub</span> </a>
+      <a href="https://www.facebook.com/dann.berlin.3/" target="_blank" rel="noopener noreferrer" aria-label="Facebook" class="glass rounded-lg sm:rounded-xl px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-center hover-lift"> <i data-lucide="facebook" class="w-4 h-4 sm:w-5 sm:h-5" style="color: var(--accent);"></i> <span class="sr-only">Facebook</span> </a>
+      <a href="https://www.linkedin.com/in/dann-berlin-2331a4255/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" class="glass rounded-lg sm:rounded-xl px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-center hover-lift"> <i data-lucide="linkedin" class="w-4 h-4 sm:w-5 sm:h-5" style="color: var(--accent);"></i> <span class="sr-only">LinkedIn</span> </a>
+     </div>
+    </div>
+   </section><!-- Footer -->
+   <footer class="px-3 sm:px-4 py-4 sm:py-6 text-center" style="border-top: 1px solid var(--border);">
+    <p class="text-xs" style="color: var(--text-secondary);">© 2025 Dann Berlin. Hello, You!</p>
+   </footer>
+  </div>
+  <script>
+// ===== THEME: System preference =====
+function getSystemTheme() {
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+let currentTheme = getSystemTheme();
+
+function applyTheme(theme) {
+  currentTheme = theme;
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+}
+
+applyTheme(currentTheme);
+
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+  applyTheme(e.matches ? 'dark' : 'light');
+});
+
+// ===== SCROLL ANIMATIONS =====
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      // Stagger children
+      const children = entry.target.querySelectorAll('.stagger-child');
+      children.forEach((child, i) => {
+        setTimeout(() => child.classList.add('visible'), i * 120);
+      });
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.section-block').forEach(el => observer.observe(el));
+
+// ===== ACTIVE NAV LINK =====
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.nav-link');
+
+const navObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      navLinks.forEach(l => l.classList.remove('active'));
+      const activeLink = document.querySelector(`.nav-link[href="#${entry.target.id}"]`);
+      if (activeLink) activeLink.classList.add('active');
+    }
+  });
+}, { threshold: 0.3 });
+
+sections.forEach(s => navObserver.observe(s));
+
+// ===== ELEMENT SDK =====
+const defaultConfig = {
+  hero_name: 'Dann Berlin',
+  hero_tagline: 'Crafting beautiful, intuitive experiences with Apple-inspired design principles.',
+  about_text: 'UI/Product Designer specializing in crafting minimal, elegant interfaces inspired by Apple\'s design philosophy. Focused on user experience, accessibility, and creating interfaces that feel intuitive and delightful. Currently exploring design systems, interaction design, and building digital products that prioritize simplicity and clarity over complexity.',
+  contact_email: 'dannberlin11@gmail.com',
+  contact_phone: '+91 6382915038',
+  image_url: '',
+  background_color: '#1a1410',
+  surface_color: '#2a1f18',
+  text_color: '#f5e6d3',
+  accent_color: '#d4a574',
+  secondary_text_color: '#c9a876',
+  font_family: 'Outfit',
+  font_size: 14
+};
+
+function applyConfig(config) {
+  const c = { ...defaultConfig, ...config };
+
+  // Text
+  const heroName = document.getElementById('hero-name');
+  if (heroName) heroName.textContent = c.hero_name;
+  const heroTagline = document.getElementById('hero-tagline');
+  if (heroTagline) heroTagline.textContent = c.hero_tagline;
+  const aboutText = document.getElementById('about-text');
+  if (aboutText) aboutText.textContent = c.about_text;
+  const emailText = document.getElementById('contact-email-text');
+  if (emailText) emailText.textContent = c.contact_email;
+  const phoneText = document.getElementById('contact-phone-text');
+  if (phoneText) phoneText.textContent = c.contact_phone;
+
+  // Profile images — apply image URL if provided
+  document.querySelectorAll('.profile-image').forEach(el => {
+    if (c.image_url) {
+      el.style.backgroundImage = `url('${c.image_url}')`;
+      el.style.backgroundSize = 'cover';
+      el.style.backgroundPosition = 'center';
+    } else {
+      el.style.backgroundImage = 'linear-gradient(135deg, #a0714f 0%, #d4a574 100%)';
+    }
+  });
+
+  // Colors — apply to CSS variables
+  document.documentElement.style.setProperty('--bg', c.background_color);
+  document.documentElement.style.setProperty('--surface', c.surface_color);
+  document.documentElement.style.setProperty('--text', c.text_color);
+  document.documentElement.style.setProperty('--accent', c.accent_color);
+  document.documentElement.style.setProperty('--text-secondary', c.secondary_text_color);
+
+  // Font
+  const fontStack = `${c.font_family}, sans-serif`;
+  document.body.style.fontFamily = fontStack;
+  document.querySelectorAll('.font-display').forEach(el => el.style.fontFamily = fontStack);
+
+  // Font size
+  const base = c.font_size;
+  document.querySelectorAll('.text-xs').forEach(el => el.style.fontSize = `${base * 0.85}px`);
+  document.querySelectorAll('.text-sm').forEach(el => el.style.fontSize = `${base}px`);
+  document.querySelectorAll('.text-base').forEach(el => el.style.fontSize = `${base * 1.15}px`);
+}
+
+if (window.elementSdk) {
+  window.elementSdk.init({
+    defaultConfig,
+    onConfigChange: async (config) => { applyConfig(config); },
+    mapToCapabilities: (config) => {
+      const c = { ...defaultConfig, ...config };
+      return {
+        recolorables: [
+          { get: () => c.background_color, set: (v) => { config.background_color = v; window.elementSdk.setConfig({ background_color: v }); } },
+          { get: () => c.surface_color, set: (v) => { config.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); } },
+          { get: () => c.text_color, set: (v) => { config.text_color = v; window.elementSdk.setConfig({ text_color: v }); } },
+          { get: () => c.accent_color, set: (v) => { config.accent_color = v; window.elementSdk.setConfig({ accent_color: v }); } },
+          { get: () => c.secondary_text_color, set: (v) => { config.secondary_text_color = v; window.elementSdk.setConfig({ secondary_text_color: v }); } },
+        ],
+        borderables: [],
+        fontEditable: {
+          get: () => c.font_family,
+          set: (v) => { config.font_family = v; window.elementSdk.setConfig({ font_family: v }); }
+        },
+        fontSizeable: {
+          get: () => c.font_size,
+          set: (v) => { config.font_size = v; window.elementSdk.setConfig({ font_size: v }); }
+        }
+      };
+    },
+    mapToEditPanelValues: (config) => {
+      const c = { ...defaultConfig, ...config };
+      return new Map([
+        ['hero_name', c.hero_name],
+        ['hero_tagline', c.hero_tagline],
+        ['about_text', c.about_text],
+        ['contact_email', c.contact_email],
+        ['contact_phone', c.contact_phone],
+        ['image_url', c.image_url],
+      ]);
+    }
+  });
+}
+
+// Init Lucide
+lucide.createIcons();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ee32200f163b2c1',t:'MTc3NjUwOTY4MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
-
