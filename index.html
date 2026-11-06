@@ -51,7 +51,7 @@
     --accent-ink: #1a0f08;
     --orb-a: #c0662a; --orb-b: #6e341a; --orb-c: #f0b67a; --orb-op: .6;
     --solid-lens: #24170f; --solid-surface: #1d130c;   /* reduced-transparency fallbacks */
-    --ld-bg: #000; --ld-ink: #f7ead8; --ld-glow: 224,174,124;   /* loader */
+    --ld-bg: #000; --ld-ink: #f7ead8;   /* loader */
     --stack-dim: .45;                                           /* how much buried cards darken */
     --radius-xl: 32px;
     --radius-lg: 24px;
@@ -73,7 +73,7 @@
       --accent-ink: #fff8f0;
       --orb-a: #f2a46a; --orb-b: #d9a07a; --orb-c: #ffd6a8; --orb-op: .55;
       --solid-lens: #fbf4ec; --solid-surface: #fffaf4;
-      --ld-bg: #fbf7f2; --ld-ink: #2a1a10; --ld-glow: 176,112,58;
+      --ld-bg: #fbf7f2; --ld-ink: #2a1a10;
       --stack-dim: .1;
     }
   }
@@ -457,25 +457,18 @@
   .loader.out { pointer-events: none; }
   .ld-bg { position: absolute; inset: 0; background: var(--ld-bg);
     transition: opacity .9s cubic-bezier(.22,1,.36,1); }
-  .ld-glow { position: absolute; width: 46vmax; height: 46vmax; border-radius: 50%; filter: blur(90px); opacity: .35;
-    background: #c0662a; animation: ld-breathe 5s ease-in-out infinite; transition: opacity .9s; }
   .loader.out .ld-bg { opacity: 0; }
-  .loader.out .ld-glow { animation: none; opacity: 0; }
-  @keyframes ld-breathe { 50% { transform: scale(1.12); opacity: .45; } }
 
-  /* handwritten signature, iOS "hello" style: a pen sweeps left→right, the
-     stroke draws, then the ink fills in with a warm glow */
-  .ld-sign { width: min(80vw, 640px); height: auto; overflow: visible;
-    filter: drop-shadow(0 0 18px rgba(var(--ld-glow),.35));
+  /* handwritten signature, iOS "hello" style: one pen writes it, then un-writes it.
+     position/z-index keep it above the absolutely-positioned backdrop. */
+  .ld-sign { position: relative; z-index: 1; width: min(80vw, 640px); height: auto; overflow: visible;
     transition: opacity .9s cubic-bezier(.22,1,.36,1), transform 1s cubic-bezier(.22,1,.36,1), filter .9s; }
   /* one continuous pen line (single-stroke script); JS sets the dash to its real length */
   .ld-sign path { fill: none; stroke: var(--ld-ink); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round;
     stroke-dasharray: 0 99999; }
-  /* strokes are written one after another by JS (Web Animations); glow once the pen lifts */
-  .loader.go .ld-sign { animation: ld-glow 1.2s ease 3.1s forwards; }
-  @keyframes ld-glow { to { filter: drop-shadow(0 0 22px rgba(var(--ld-glow),.65)); } }
+  /* strokes are written one after another by JS (Web Animations) */
 
-  .loader.done .ld-sign { opacity: 0; transform: translateY(-14px) scale(1.04); filter: blur(10px) drop-shadow(0 0 18px rgba(var(--ld-glow),0)); }
+  .loader.done .ld-sign { opacity: 0; transform: translateY(-14px) scale(1.04); filter: blur(10px); }
 
   @media (prefers-reduced-motion: reduce) {
     .ld-sign path { stroke-dasharray: none !important; }
