@@ -263,6 +263,7 @@
   /* hold-and-drag lens: a clear liquid-glass drop that floats ABOVE the dock (outside it, so
      its backdrop sees the icons + page) and refracts/magnifies them like the shader. The
      engine gives it the displacement filter on Chromium; others get a light clear blur. */
+  .drag-gl { position: fixed; left: 0; top: 0; z-index: 56; pointer-events: none; opacity: 0; will-change: opacity; }
   .drag-lens { position: fixed; left: 0; top: 0; z-index: 55; pointer-events: none; opacity: 0;
     width: calc((min(420px, 100vw - 28px) - 16px) / 5 * 1.4); height: 76px; border-radius: 38px;
     background: rgba(255,255,255,.05);
@@ -292,7 +293,7 @@
   .reveal.in { opacity: 1; transform: none; filter: none; }
 
   /* HERO */
-  .hero { min-height: calc(100svh - 120px); display: grid; place-items: center; text-align: center; padding-top: 90px; }
+  .hero { min-height: calc(100vh - 120px); min-height: calc(100svh - 120px); display: grid; place-items: center; text-align: center; padding-top: 90px; }
   .avatar-ring { width: 128px; height: 128px; margin: 0 auto 26px; border-radius: 50%; padding: 3px;
     background: conic-gradient(from 210deg, var(--accent), #fff4e6, #8a4a22, var(--accent));
     box-shadow: 0 0 60px -10px color-mix(in srgb, var(--accent) 70%, transparent); }
@@ -361,8 +362,8 @@
     color: var(--text); max-width: 760px; margin: 18px auto 34px; }
   .tagline em { color: var(--accent); }
 
-  .pin { min-height: 100svh; display: grid; place-items: center; }
-  .motion .pin { position: sticky; top: 0; height: 100svh; min-height: 0; overflow: clip; }
+  .pin { min-height: 100vh; min-height: 100svh; display: grid; place-items: center; }
+  .motion .pin { position: sticky; top: 0; height: 100vh; height: 100svh; min-height: 0; overflow: hidden; overflow: clip; }
 
   /* 1 · hero shrinks + blurs away while pinned */
   .hero-scene { padding: 0; }
@@ -471,6 +472,30 @@
 
   @media (prefers-reduced-motion: reduce) {
     .ld-sign path { stroke-dasharray: none !important; }
+  }
+
+  /* =====================================================================
+     COMPATIBILITY — older Samsung Internet / Chromium (< 111) lack color-mix();
+     give them static equivalents so nothing renders transparent or unstyled.
+     ===================================================================== */
+  @supports not (color: color-mix(in srgb, red 50%, blue)) {
+    .chip { background: rgba(224,174,124,.12); border-color: rgba(224,174,124,.24); }
+    .btn.primary { box-shadow: 0 12px 30px -10px rgba(224,174,124,.7); }
+    .card.hover:hover { border-color: rgba(224,174,124,.38); }
+    .avatar-ring { box-shadow: 0 0 60px -10px rgba(224,174,124,.6); }
+    .timeline .card::before { box-shadow: 0 0 0 4px rgba(224,174,124,.22); }
+    .pcard .num { color: var(--accent); opacity: .6; }
+    .mail { border-bottom-color: rgba(224,174,124,.5); }
+    .edge.bottom, .edge.top { background: none; }
+    .motion .stack .card { background: var(--bg-2); }
+    .dots button { background: var(--text-2); opacity: .45; }
+    .dots button[aria-current="true"] { background: var(--accent); opacity: 1; }
+    ::-webkit-scrollbar-thumb { background-color: rgba(224,174,124,.5); }
+    h1 { background: none; color: var(--text); }
+  }
+  /* phones: lighter blur on content cards (smoother scrolling on mid-range devices) */
+  @media (max-width: 719px) {
+    .surface { -webkit-backdrop-filter: blur(12px) saturate(140%); backdrop-filter: blur(12px) saturate(140%); }
   }
 </style>
 </head>
@@ -703,6 +728,7 @@
       <span class="lbl">Contact</span></a></li>
   </ul>
 </nav>
+<canvas class="drag-gl" id="dragGL" aria-hidden="true"></canvas>
 <div class="drag-lens lens" id="dragLens" data-lens data-bevel="14" data-scale="44" data-mag="0.45" data-blur="0.3" aria-hidden="true"></div>
 
 <script>
@@ -719,7 +745,11 @@
    ======================================================================= */
 (() => {
   const ua = navigator.userAgent;
-  const chromium = !!window.chrome && /Chrome|Chromium|Edg\//.test(ua) && !/Firefox|FxiOS|CriOS/.test(ua) && !/iPhone|iPad/.test(ua);
+  // Blink (Chrome, Edge, Opera, Samsung Internet) renders url() in backdrop-filter. Detect the engine,
+  // not the brand: userAgentData is Blink-only; the UA test covers older Samsung/Chrome builds.
+  // iOS browsers are all WebKit underneath, so they keep the frosted fallback.
+  const blink = !!navigator.userAgentData || /Chrome\/|Chromium\/|SamsungBrowser\/|Edg\//.test(ua);
+  const chromium = blink && !/Firefox|FxiOS|CriOS|EdgiOS/.test(ua) && !/iPhone|iPad|iPod/.test(ua);
   const reduceT = matchMedia('(prefers-reduced-transparency: reduce)').matches;
   if (!chromium || reduceT) return;
 
@@ -792,6 +822,145 @@
 })();
 
 /* =======================================================================
+   WEBGL LIQUID LENS for dock hold-and-drag — the pasted shader, adapted:
+     · lens centred on the finger (uMouse) instead of the screen centre
+     · transparent outside the lens (only the drop is drawn)
+     · uScale grows it as it lifts, uStretch widens it into a pill / goo stretch
+   WebGL can't read the page, so the dock (background + icons) is painted into
+   a small texture when the hold starts and whenever the highlighted tab changes.
+   No WebGL → falls back to the CSS/SVG .drag-lens.
+   ======================================================================= */
+const glLens = (() => {
+  const off = { ok: false };
+  const cv = document.getElementById('dragGL');
+  if (!cv || !matchMedia('(pointer: coarse)').matches) return off;
+  const gl = cv.getContext('webgl', { premultipliedAlpha: true, alpha: true, antialias: false });
+  if (!gl) return off;
+
+  const VS = 'attribute vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }';
+  const FS = `
+    #ifdef GL_FRAGMENT_PRECISION_HIGH
+      precision highp float;
+    #else
+      precision mediump float;
+    #endif
+    uniform vec2 uRes; uniform vec2 uMouse; uniform float uScale; uniform float uStretch; uniform float uGlow;
+    uniform sampler2D uTex;
+    void main() {
+      const float POWER_EXPONENT = 6.0;
+      const float MASK_MULTIPLIER_1 = 10000.0, MASK_MULTIPLIER_2 = 9500.0, MASK_MULTIPLIER_3 = 11000.0;
+      const float LENS_MULTIPLIER = 5000.0;
+      const float MASK_STRENGTH_1 = 8.0, MASK_STRENGTH_2 = 16.0, MASK_STRENGTH_3 = 2.0;
+      const float MASK_THRESHOLD_1 = 0.95, MASK_THRESHOLD_2 = 0.9, MASK_THRESHOLD_3 = 1.5;
+      const float SAMPLE_RANGE = 4.0, SAMPLE_OFFSET = 0.5;
+      const float GRADIENT_RANGE = 0.2, GRADIENT_OFFSET = 0.1, GRADIENT_EXTREME = -1000.0;
+      const float LIGHTING_INTENSITY = 0.3;
+
+      vec2 uv = gl_FragCoord.xy / uRes;
+      vec2 m = uMouse / uRes;
+      vec2 m2 = uv - m;
+      vec2 q = vec2(m2.x * uRes.x / uRes.y / uStretch, m2.y) / uScale;
+
+      float roundedBox = pow(abs(q.x), POWER_EXPONENT) + pow(abs(q.y), POWER_EXPONENT);
+      float rb1 = clamp((1.0 - roundedBox * MASK_MULTIPLIER_1) * MASK_STRENGTH_1, 0.0, 1.0);
+      float rb2 = clamp((MASK_THRESHOLD_1 - roundedBox * MASK_MULTIPLIER_2) * MASK_STRENGTH_2, 0.0, 1.0)
+                - clamp((MASK_THRESHOLD_2 - roundedBox * MASK_MULTIPLIER_2) * MASK_STRENGTH_2, 0.0, 1.0);
+      float rb3 = clamp((MASK_THRESHOLD_3 - roundedBox * MASK_MULTIPLIER_3) * MASK_STRENGTH_3, 0.0, 1.0)
+                - clamp((1.0 - roundedBox * MASK_MULTIPLIER_3) * MASK_STRENGTH_3, 0.0, 1.0);
+      float transition = smoothstep(0.0, 1.0, rb1 + rb2);
+      if (transition <= 0.0) { gl_FragColor = vec4(0.0); return; }
+
+      vec2 lens = (uv - m) * (1.0 - roundedBox * LENS_MULTIPLIER) + m;
+      vec4 c = vec4(0.0); float total = 0.0;
+      for (float x = -SAMPLE_RANGE; x <= SAMPLE_RANGE; x++) {
+        for (float y = -SAMPLE_RANGE; y <= SAMPLE_RANGE; y++) {
+          c += texture2D(uTex, lens + vec2(x, y) * SAMPLE_OFFSET / uRes);
+          total += 1.0;
+        }
+      }
+      c /= total;
+      float gradient = clamp((clamp(q.y, 0.0, GRADIENT_RANGE) + GRADIENT_OFFSET) / 2.0, 0.0, 1.0)
+                     + clamp((clamp(-q.y, GRADIENT_EXTREME, GRADIENT_RANGE) * rb3 + GRADIENT_OFFSET) / 2.0, 0.0, 1.0);
+      vec4 lighting = clamp(c + vec4(rb1) * gradient * uGlow + vec4(rb2) * LIGHTING_INTENSITY, 0.0, 1.0);
+      gl_FragColor = vec4(lighting.rgb, 1.0) * transition;   // premultiplied
+    }`;
+  const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+    return gl.getShaderParameter(s, gl.COMPILE_STATUS) ? s : null; };
+  const vs = sh(gl.VERTEX_SHADER, VS), fs = sh(gl.FRAGMENT_SHADER, FS);
+  if (!vs || !fs) return off;
+  const prog = gl.createProgram(); gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return off;
+  gl.useProgram(prog);
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+  const pLoc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(pLoc); gl.vertexAttribPointer(pLoc, 2, gl.FLOAT, false, 0, 0);
+  const U = n => gl.getUniformLocation(prog, n);
+  const uRes = U('uRes'), uMouse = U('uMouse'), uScale = U('uScale'), uStretch = U('uStretch'), uGlow = U('uGlow');
+  const lightMQ = matchMedia('(prefers-color-scheme: light)');   // light theme: softer sheen so it doesn't wash out
+  const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.uniform1i(U('uTex'), 0);
+
+  const snap = document.createElement('canvas'), sx = snap.getContext('2d');
+  const H = 190;                       // lens ≈ 0.43 × H tall (shader mask), so ~82 px
+  let ox = 0, oy = 0, W = 0, dpr = 1, ready = false, seq = 0;
+
+  function place(dockRect) {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = Math.round(dockRect.width + 48);
+    ox = dockRect.left - 24; oy = dockRect.top + dockRect.height / 2 - H / 2;
+    cv.style.width = W + 'px'; cv.style.height = H + 'px';
+    cv.style.transform = `translate(${ox}px, ${oy}px)`;
+    cv.width = snap.width = Math.round(W * dpr); cv.height = snap.height = Math.round(H * dpr);
+  }
+  // copy computed paint styles inline so the SVG rasterises exactly as shown
+  function rasterize(svg) {
+    const r = svg.getBoundingClientRect();
+    const clone = svg.cloneNode(true);
+    const src = [svg, ...svg.querySelectorAll('*')], dst = [clone, ...clone.querySelectorAll('*')];
+    src.forEach((el, i) => { const c = getComputedStyle(el);
+      dst[i].setAttribute('style', `fill:${c.fill};stroke:${c.stroke};stroke-width:${c.strokeWidth};stroke-linecap:${c.strokeLinecap};stroke-linejoin:${c.strokeLinejoin}`); });
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    clone.setAttribute('width', r.width * dpr); clone.setAttribute('height', r.height * dpr);
+    const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(new XMLSerializer().serializeToString(clone));
+    return new Promise(res => { const img = new Image(); img.onload = () => res({ img, r }); img.onerror = () => res(null); img.src = url; });
+  }
+  async function snapshot(dock) {
+    const my = ++seq;
+    const svgs = [...dock.querySelectorAll('svg')].filter(s => parseFloat(getComputedStyle(s).opacity) > 0.5 && s.getBoundingClientRect().width);
+    const parts = (await Promise.all(svgs.map(rasterize))).filter(Boolean);
+    if (my !== seq) return;
+    const dr = dock.getBoundingClientRect();
+    sx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    sx.fillStyle = getComputedStyle(document.body).backgroundColor; sx.fillRect(0, 0, W, H);
+    sx.beginPath();
+    if (sx.roundRect) sx.roundRect(dr.left - ox, dr.top - oy, dr.width, dr.height, 30);
+    else sx.rect(dr.left - ox, dr.top - oy, dr.width, dr.height);
+    sx.fillStyle = getComputedStyle(dock).backgroundColor; sx.fill();
+    sx.strokeStyle = 'rgba(255,255,255,.28)'; sx.lineWidth = 1; sx.stroke();
+    parts.forEach(({ img, r }) => sx.drawImage(img, r.left - ox, r.top - oy, r.width, r.height));
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, snap);
+    ready = true;
+  }
+  function draw(cx, cy, scale, stretch, alpha) {
+    if (!ready || alpha < 0.01) { cv.style.opacity = 0; return; }
+    cv.style.opacity = alpha.toFixed(3);
+    gl.viewport(0, 0, cv.width, cv.height);
+    gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform2f(uRes, cv.width, cv.height);
+    gl.uniform2f(uMouse, (cx - ox) * dpr, (H - (cy - oy)) * dpr);
+    gl.uniform1f(uScale, scale); gl.uniform1f(uStretch, stretch); gl.uniform1f(uGlow, lightMQ.matches ? 0.2 : 1.0);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+  return { ok: true, place, snapshot, draw, hide: () => { cv.style.opacity = 0; } };
+})();
+
+/* =======================================================================
    DOCK: slime indicator with spring physics (leading edge pulls, trailing
    edge lags, body squashes vertically while stretched) + icon→word swap
    ======================================================================= */
@@ -826,7 +995,14 @@
     slime.style.transform = `scale(${sx.toFixed(3)}, ${sy.toFixed(3)})`;
 
     // while lifted, the slime hands over to the floating liquid-glass lens
-    if (lens) {
+    if (glLens.ok) {                                              // WebGL shader lens
+      if (lift > 0.01) {
+        const lr = list.getBoundingClientRect();
+        glLens.draw(lr.left + (L + R) / 2, lr.top + lr.height / 2 - lift * 4,
+          0.72 + 0.28 * lift, 1.25 * (1 + Math.min(stretch * 0.5, 0.35)), lift);
+      } else glLens.hide();
+      slime.style.opacity = (1 - lift).toFixed(3);
+    } else if (lens) {                                            // CSS/SVG fallback lens
       if (lift > 0.01) {
         const lr = list.getBoundingClientRect();
         const cx = lr.left + (L + R) / 2, cy = lr.top + lr.height / 2;
@@ -900,6 +1076,10 @@
       if (dragging || pid === null) return;
       dragging = true; peek = under();
       dock.classList.add('dragging');
+      if (glLens.ok) {                                   // paint the dock into the shader's texture
+        glLens.place(dock.getBoundingClientRect());
+        glLens.snapshot(dock); setTimeout(() => dragging && glLens.snapshot(dock), 520);
+      }
       try { list.setPointerCapture(pid); } catch (_) {}
       navigator.vibrate?.(10);
       mark(peek); kick();
@@ -915,7 +1095,10 @@
       if (!dragging && Math.abs(e.clientX - startX) > 10) { clearTimeout(holdT); begin(); } // …or just start sliding
       if (dragging) {
         const i = under();
-        if (i !== peek) { peek = i; mark(i); navigator.vibrate?.(4); }   // tick as you cross each tab
+        if (i !== peek) {                                                // tick as you cross each tab
+          peek = i; mark(i); navigator.vibrate?.(4);
+          if (glLens.ok) { glLens.snapshot(dock); setTimeout(() => dragging && glLens.snapshot(dock), 620); }
+        }
       }
     });
     const end = e => {
