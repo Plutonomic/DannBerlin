@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Dann Berlin — Applied AI System Engineer</title>
 <meta name="description" content="Dann Berlin — Applied AI Engineer at Exalca Technologies. Building production LLM systems: document understanding, fine-tuning and quantization. B.Tech AI & Data Science, 2026.">
-<meta name="color-scheme" content="light dark">
+<!-- "only light" opts out of Chromium / Samsung Internet "force dark" re-colouring.
+     The site still has its own dark theme via prefers-color-scheme (see :root tokens). -->
+<meta name="color-scheme" content="only light">
 <meta name="theme-color" content="#120a06" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#f4e8da" media="(prefers-color-scheme: light)">
 <script>
@@ -84,8 +86,11 @@
       --stack-dim: .1;
     }
   }
+  /* Always declare BOTH schemes: a light-only declaration invites Samsung Internet / Chrome
+     "force dark" to re-colour the page (grey intro, dark-on-dark name, dark-red buttons). */
   :root { color-scheme: dark; }
-  @media (prefers-color-scheme: light) { :root { color-scheme: light; } }
+  /* `only light` = explicit opt-out from Chromium/Samsung "force dark" re-colouring */
+  @media (prefers-color-scheme: light) { :root { color-scheme: only light; } }
 
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
@@ -922,7 +927,7 @@ const glLens = (() => {
 
   const snap = document.createElement('canvas'), sx = snap.getContext('2d');
   const H = 190;                       // lens ≈ 0.43 × H tall (shader mask), so ~82 px
-  let ox = 0, oy = 0, W = 0, dpr = 1, ready = false, seq = 0;
+  let ox = 0, oy = 0, W = 0, dpr = 1, ready = false, complete = false, seq = 0;
 
   function place(dockRect) {
     dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -939,15 +944,17 @@ const glLens = (() => {
     const src = [svg, ...svg.querySelectorAll('*')], dst = [clone, ...clone.querySelectorAll('*')];
     src.forEach((el, i) => { const c = getComputedStyle(el);
       dst[i].setAttribute('style', `fill:${c.fill};stroke:${c.stroke};stroke-width:${c.strokeWidth};stroke-linecap:${c.strokeLinecap};stroke-linejoin:${c.strokeLinejoin}`); });
-    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
     clone.setAttribute('width', r.width * dpr); clone.setAttribute('height', r.height * dpr);
-    const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(new XMLSerializer().serializeToString(clone));
+    let xml = new XMLSerializer().serializeToString(clone);
+    if (!/^<svg[^>]*\sxmlns=/.test(xml)) xml = xml.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
+    const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml);
     return new Promise(res => { const img = new Image(); img.onload = () => res({ img, r }); img.onerror = () => res(null); img.src = url; });
   }
   async function snapshot(dock) {
     const my = ++seq;
     const svgs = [...dock.querySelectorAll('svg')].filter(s => parseFloat(getComputedStyle(s).opacity) > 0.5 && s.getBoundingClientRect().width);
     const parts = (await Promise.all(svgs.map(rasterize))).filter(Boolean);
+    const allIcons = parts.length === svgs.length;
     if (my !== seq) return;
     const dr = dock.getBoundingClientRect();
     sx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -965,7 +972,7 @@ const glLens = (() => {
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, snap);
-    ready = true;
+    ready = true; complete = allIcons;
   }
   function draw(cx, cy, hw, hh, alpha) {
     if (!ready || alpha < 0.01) { cv.style.opacity = 0; return false; }
@@ -977,7 +984,7 @@ const glLens = (() => {
     gl.uniform2f(uHalf, hw * dpr, hh * dpr);
     gl.uniform1f(uGlow, lightMQ.matches ? 0.55 : 1.0);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    return true;
+    return complete;          // true = canvas shows every icon, safe to hide the real ones
   }
   return { ok: true, reason: 'ok', place, snapshot, draw, hide: () => { cv.style.opacity = 0; } };
 })();
