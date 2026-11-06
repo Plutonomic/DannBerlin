@@ -822,20 +822,21 @@
 })();
 
 /* =======================================================================
-   WEBGL LIQUID LENS for dock hold-and-drag — the pasted shader, adapted:
-     · lens centred on the finger (uMouse) instead of the screen centre
-     · transparent outside the lens (only the drop is drawn)
-     · uScale grows it as it lifts, uStretch widens it into a pill / goo stretch
-   WebGL can't read the page, so the dock (background + icons) is painted into
-   a small texture when the hold starts and whenever the highlighted tab changes.
+   WEBGL LIQUID LENS for dock hold-and-drag — based on the pasted shader:
+     · clean pill (stadium) shape that follows the finger, sized by uHalf
+     · centre magnified, light bends inward at the rim, RGB split at the edge
+     · transparent glass body + rim / top sheen / bottom glow lighting
+   WebGL can't read the page, so the dock icons are painted into a small
+   transparent texture when the hold starts and whenever the tab changes;
+   the real icons are masked out under the lens so nothing shows twice.
    No WebGL → falls back to the CSS/SVG .drag-lens.
    ======================================================================= */
 const glLens = (() => {
-  const off = { ok: false };
   const cv = document.getElementById('dragGL');
-  if (!cv || !matchMedia('(pointer: coarse)').matches) return off;
+  if (!cv) return { ok: false, reason: 'no #dragGL canvas' };
+  if (!matchMedia('(pointer: coarse)').matches) return { ok: false, reason: 'not a touch screen (pointer: coarse = false)' };
   const gl = cv.getContext('webgl', { premultipliedAlpha: true, alpha: true, antialias: false });
-  if (!gl) return off;
+  if (!gl) return { ok: false, reason: 'WebGL unavailable (blocked or unsupported)' };
 
   const VS = 'attribute vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }';
   const FS = `
@@ -844,59 +845,63 @@ const glLens = (() => {
     #else
       precision mediump float;
     #endif
-    uniform vec2 uRes; uniform vec2 uMouse; uniform float uScale; uniform float uStretch; uniform float uGlow;
-    uniform sampler2D uTex;
+    uniform vec2 uRes;      // canvas size (device px)
+    uniform vec2 uMouse;    // lens centre (device px, GL coords)
+    uniform vec2 uHalf;     // lens half-size (device px)
+    uniform float uGlow;    // highlight strength (softer in light theme)
+    uniform sampler2D uTex; // dock icons only, transparent background, premultiplied
+
+    vec4 tap(vec2 px) { return texture2D(uTex, px / uRes); }
+
     void main() {
-      const float POWER_EXPONENT = 6.0;
-      const float MASK_MULTIPLIER_1 = 10000.0, MASK_MULTIPLIER_2 = 9500.0, MASK_MULTIPLIER_3 = 11000.0;
-      const float LENS_MULTIPLIER = 5000.0;
-      const float MASK_STRENGTH_1 = 8.0, MASK_STRENGTH_2 = 16.0, MASK_STRENGTH_3 = 2.0;
-      const float MASK_THRESHOLD_1 = 0.95, MASK_THRESHOLD_2 = 0.9, MASK_THRESHOLD_3 = 1.5;
-      const float SAMPLE_RANGE = 4.0, SAMPLE_OFFSET = 0.5;
-      const float GRADIENT_RANGE = 0.2, GRADIENT_OFFSET = 0.1, GRADIENT_EXTREME = -1000.0;
-      const float LIGHTING_INTENSITY = 0.3;
+      vec2 p = gl_FragCoord.xy - uMouse;
+      float r = uHalf.y;
+      vec2 q = abs(p) - vec2(uHalf.x - r, 0.0);
+      float d = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;   // pill SDF, < 0 inside
+      if (d > 1.0) { gl_FragColor = vec4(0.0); return; }
+      float aa = clamp(0.5 - d, 0.0, 1.0);                              // smooth antialiased edge
 
-      vec2 uv = gl_FragCoord.xy / uRes;
-      vec2 m = uMouse / uRes;
-      vec2 m2 = uv - m;
-      vec2 q = vec2(m2.x * uRes.x / uRes.y / uStretch, m2.y) / uScale;
+      // refraction: centre magnified, light bends inward near the rim (same idea as the shader's lens term)
+      float edge = clamp(1.0 + d / (r * 0.95), 0.0, 1.0);               // 0 centre -> 1 rim
+      float bend = edge * edge * edge;
+      float k = 0.8 - 0.38 * bend;
+      float ca = 0.035 * bend;                                          // chromatic split at the rim
+      vec4 cr = tap(uMouse + p * (k - ca));
+      vec4 cg = tap(uMouse + p * k);
+      vec4 cb = tap(uMouse + p * (k + ca));
+      vec4 c = vec4(cr.r, cg.g, cb.b, max(cg.a, max(cr.a, cb.a)));
 
-      float roundedBox = pow(abs(q.x), POWER_EXPONENT) + pow(abs(q.y), POWER_EXPONENT);
-      float rb1 = clamp((1.0 - roundedBox * MASK_MULTIPLIER_1) * MASK_STRENGTH_1, 0.0, 1.0);
-      float rb2 = clamp((MASK_THRESHOLD_1 - roundedBox * MASK_MULTIPLIER_2) * MASK_STRENGTH_2, 0.0, 1.0)
-                - clamp((MASK_THRESHOLD_2 - roundedBox * MASK_MULTIPLIER_2) * MASK_STRENGTH_2, 0.0, 1.0);
-      float rb3 = clamp((MASK_THRESHOLD_3 - roundedBox * MASK_MULTIPLIER_3) * MASK_STRENGTH_3, 0.0, 1.0)
-                - clamp((1.0 - roundedBox * MASK_MULTIPLIER_3) * MASK_STRENGTH_3, 0.0, 1.0);
-      float transition = smoothstep(0.0, 1.0, rb1 + rb2);
-      if (transition <= 0.0) { gl_FragColor = vec4(0.0); return; }
+      // glass lighting: faint body tint, bright thin rim, top sheen, soft bottom glow
+      float rim   = smoothstep(-2.6, -0.4, d);                          // hairline at the edge
+      float inner = smoothstep(-7.0, -1.5, d) * (1.0 - rim);            // soft band inside the rim
+      float topk  = clamp(p.y / uHalf.y, 0.0, 1.0);
+      float botk  = clamp(-p.y / uHalf.y, 0.0, 1.0);
+      float light = 0.05
+                  + rim   * (0.30 + 0.45 * topk) * uGlow
+                  + inner * (0.10 * topk + 0.08 * botk) * uGlow
+                  + 0.10 * smoothstep(0.35, 1.0, topk) * (1.0 - edge) * uGlow;
+      float shade = smoothstep(-1.2, 0.4, d) * 0.18;                    // dark outer line for definition
 
-      vec2 lens = (uv - m) * (1.0 - roundedBox * LENS_MULTIPLIER) + m;
-      vec4 c = vec4(0.0); float total = 0.0;
-      for (float x = -SAMPLE_RANGE; x <= SAMPLE_RANGE; x++) {
-        for (float y = -SAMPLE_RANGE; y <= SAMPLE_RANGE; y++) {
-          c += texture2D(uTex, lens + vec2(x, y) * SAMPLE_OFFSET / uRes);
-          total += 1.0;
-        }
-      }
-      c /= total;
-      float gradient = clamp((clamp(q.y, 0.0, GRADIENT_RANGE) + GRADIENT_OFFSET) / 2.0, 0.0, 1.0)
-                     + clamp((clamp(-q.y, GRADIENT_EXTREME, GRADIENT_RANGE) * rb3 + GRADIENT_OFFSET) / 2.0, 0.0, 1.0);
-      vec4 lighting = clamp(c + vec4(rb1) * gradient * uGlow + vec4(rb2) * LIGHTING_INTENSITY, 0.0, 1.0);
-      gl_FragColor = vec4(lighting.rgb, 1.0) * transition;   // premultiplied
+      vec4 col = c;
+      col += vec4(light);
+      col.rgb *= (1.0 - shade);
+      col.a = max(col.a, shade);
+      gl_FragColor = clamp(col, 0.0, 1.0) * aa;
     }`;
+  let shaderLog = '';
   const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
-    return gl.getShaderParameter(s, gl.COMPILE_STATUS) ? s : null; };
+    if (gl.getShaderParameter(s, gl.COMPILE_STATUS)) return s; shaderLog += gl.getShaderInfoLog(s) || 'compile failed'; return null; };
   const vs = sh(gl.VERTEX_SHADER, VS), fs = sh(gl.FRAGMENT_SHADER, FS);
-  if (!vs || !fs) return off;
+  if (!vs || !fs) return { ok: false, reason: 'shader compile failed: ' + shaderLog };
   const prog = gl.createProgram(); gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog);
-  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return off;
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return { ok: false, reason: 'shader link failed: ' + gl.getProgramInfoLog(prog) };
   gl.useProgram(prog);
   gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
   const pLoc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(pLoc); gl.vertexAttribPointer(pLoc, 2, gl.FLOAT, false, 0, 0);
   const U = n => gl.getUniformLocation(prog, n);
-  const uRes = U('uRes'), uMouse = U('uMouse'), uScale = U('uScale'), uStretch = U('uStretch'), uGlow = U('uGlow');
-  const lightMQ = matchMedia('(prefers-color-scheme: light)');   // light theme: softer sheen so it doesn't wash out
+  const uRes = U('uRes'), uMouse = U('uMouse'), uHalf = U('uHalf'), uGlow = U('uGlow');
+  const lightMQ = matchMedia('(prefers-color-scheme: light)');   // light theme: softer highlights
   const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
@@ -935,29 +940,27 @@ const glLens = (() => {
     if (my !== seq) return;
     const dr = dock.getBoundingClientRect();
     sx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    sx.fillStyle = getComputedStyle(document.body).backgroundColor; sx.fillRect(0, 0, W, H);
-    sx.beginPath();
-    if (sx.roundRect) sx.roundRect(dr.left - ox, dr.top - oy, dr.width, dr.height, 30);
-    else sx.rect(dr.left - ox, dr.top - oy, dr.width, dr.height);
-    sx.fillStyle = getComputedStyle(dock).backgroundColor; sx.fill();
-    sx.strokeStyle = 'rgba(255,255,255,.28)'; sx.lineWidth = 1; sx.stroke();
+    sx.setTransform(1, 0, 0, 1, 0, 0); sx.clearRect(0, 0, snap.width, snap.height);
+    sx.setTransform(dpr, 0, 0, dpr, 0, 0);
     parts.forEach(({ img, r }) => sx.drawImage(img, r.left - ox, r.top - oy, r.width, r.height));
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, snap);
     ready = true;
   }
-  function draw(cx, cy, scale, stretch, alpha) {
+  function draw(cx, cy, hw, hh, alpha) {
     if (!ready || alpha < 0.01) { cv.style.opacity = 0; return; }
     cv.style.opacity = alpha.toFixed(3);
     gl.viewport(0, 0, cv.width, cv.height);
     gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
     gl.uniform2f(uRes, cv.width, cv.height);
     gl.uniform2f(uMouse, (cx - ox) * dpr, (H - (cy - oy)) * dpr);
-    gl.uniform1f(uScale, scale); gl.uniform1f(uStretch, stretch); gl.uniform1f(uGlow, lightMQ.matches ? 0.2 : 1.0);
+    gl.uniform2f(uHalf, hw * dpr, hh * dpr);
+    gl.uniform1f(uGlow, lightMQ.matches ? 0.55 : 1.0);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
-  return { ok: true, place, snapshot, draw, hide: () => { cv.style.opacity = 0; } };
+  return { ok: true, reason: 'ok', place, snapshot, draw, hide: () => { cv.style.opacity = 0; } };
 })();
 
 /* =======================================================================
@@ -995,12 +998,17 @@ const glLens = (() => {
     slime.style.transform = `scale(${sx.toFixed(3)}, ${sy.toFixed(3)})`;
 
     // while lifted, the slime hands over to the floating liquid-glass lens
-    if (glLens.ok) {                                              // WebGL shader lens
+    if (glLens.ok) {                                              // WebGL glass lens
       if (lift > 0.01) {
         const lr = list.getBoundingClientRect();
-        glLens.draw(lr.left + (L + R) / 2, lr.top + lr.height / 2 - lift * 4,
-          0.72 + 0.28 * lift, 1.25 * (1 + Math.min(stretch * 0.5, 0.35)), lift);
-      } else glLens.hide();
+        const cx = lr.left + (L + R) / 2, cy = lr.top + lr.height / 2 - lift * 3;
+        const k = 0.75 + 0.25 * lift, ex = 1 + Math.min(stretch * 0.5, 0.35);
+        const hw = cell() * 0.68 * k * ex, hh = (lr.height / 2 + 6) * k / Math.sqrt(ex);
+        glLens.draw(cx, cy, hw, hh, lift);
+        const mx = (cx - lr.left).toFixed(1), my = (cy - lr.top).toFixed(1);
+        const m = `radial-gradient(ellipse ${(hw - 2).toFixed(1)}px ${(hh - 2).toFixed(1)}px at ${mx}px ${my}px, transparent ${Math.round(lift * 96)}%, #000 100%)`;
+        list.style.webkitMaskImage = list.style.maskImage = m;
+      } else { glLens.hide(); list.style.webkitMaskImage = list.style.maskImage = ''; }
       slime.style.opacity = (1 - lift).toFixed(3);
     } else if (lens) {                                            // CSS/SVG fallback lens
       if (lift > 0.01) {
@@ -1301,6 +1309,7 @@ const glLens = (() => {
     loader.remove();
   }
 })();
+
 
 /* =======================================================================
    MOBILE PROJECT CAROUSEL — swipe sideways, dots, gentle auto-advance.
