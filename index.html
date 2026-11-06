@@ -70,6 +70,22 @@
 
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
+
+  /* scrollbar — slim amber glass pill on a transparent track */
+  @supports not selector(::-webkit-scrollbar) {   /* Firefox: standard props (Chrome would let these override the pill) */
+    html { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--accent) 55%, transparent) transparent; }
+  }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    border: 3px solid transparent; background-clip: padding-box;   /* floats off the edge */
+    background-color: color-mix(in srgb, var(--accent) 45%, transparent);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.35);
+  }
+  ::-webkit-scrollbar-thumb:hover { background-color: color-mix(in srgb, var(--accent) 75%, transparent); border-width: 2px; }
+  ::-webkit-scrollbar-thumb:active { background-color: var(--accent); }
+  ::-webkit-scrollbar-corner { background: transparent; }
   html, body { margin: 0; }
   body {
     min-height: 100vh;
@@ -354,7 +370,7 @@
   .motion .stack { padding-left: 0; gap: 22px; }
   .motion .stack::before, .motion .stack .card::before { display: none; }
   .motion .stack .card { position: sticky; top: calc(84px + var(--i, 0) * 14px); transform-origin: 50% 0;
-    background: color-mix(in srgb, var(--bg-2) 92%, transparent); -webkit-backdrop-filter: none; backdrop-filter: none;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--bg-2) 100%, #fff 3%), var(--bg-2)); -webkit-backdrop-filter: none; backdrop-filter: none;
     will-change: transform, filter; }
 
   /* 4 · projects slide sideways while pinned */
@@ -373,6 +389,18 @@
   .pcard { flex: 0 0 min(84vw, 440px); scroll-snap-align: start; display: flex; flex-direction: column; }
   .pcard .num { font-size: clamp(56px, 8vw, 88px); line-height: .9; color: color-mix(in srgb, var(--accent) 55%, transparent); margin-bottom: 18px; }
   .h-more { width: min(1000px, 100% - 32px); margin: 4px auto 0; }
+
+  /* mobile: projects become a vertical deck (like Experience); PC keeps the sideways carousel */
+  @media (max-width: 719px) {
+    .hscroll { height: auto !important; }
+    .hpin, .motion .hpin { position: static; height: auto; overflow: visible; width: auto; margin-left: 0; padding: 104px 0 24px; }
+    .h-head, .h-more { width: auto; }
+    .track, .motion .track { flex-direction: column; gap: 22px; overflow: visible; padding: 6px 0 22px; transform: none !important; }
+    .pcard { flex: none; width: 100%; }
+    .motion .track .pcard { position: sticky; top: calc(84px + var(--i, 0) * 14px); transform-origin: 50% 0;
+      background: linear-gradient(180deg, color-mix(in srgb, var(--bg-2) 100%, #fff 3%), var(--bg-2)); -webkit-backdrop-filter: none; backdrop-filter: none;
+      will-change: transform, filter; }
+  }
 
   /* 5 · contact zooms in */
   .zoom-in { will-change: transform, opacity; transform-origin: 50% 80%; }
@@ -917,15 +945,23 @@
   const hero = document.querySelector('[data-scene="hero"]');
   const heroIn = hero && hero.querySelector('.hero-inner');
   const wordsScene = document.querySelector('[data-scene="words"]');
-  const cards = [...document.querySelectorAll('.stack .card')];
-  cards.forEach((c, i) => c.style.setProperty('--i', i));
   const hs = document.querySelector('[data-scene="h"]');
   const track = hs && hs.querySelector('.track');
   const zoom = document.querySelector('[data-scene="zoom"]');
+  const mobile = matchMedia('(max-width: 719px)');
+  // card decks: Experience always; Projects only on mobile (PC = sideways carousel)
+  const decks = [...document.querySelectorAll('.stack'), track].filter(Boolean).map(el => {
+    const cs = [...el.children].filter(c => c.classList.contains('card'));
+    cs.forEach((c, i) => c.style.setProperty('--i', i));
+    return { el, cards: cs, projects: el === track };
+  });
   let dist = 0;
 
   function layout() {
-    if (hs && track) {
+    if (hs && track && mobile.matches) {
+      dist = 0; hs.style.height = ''; track.style.transform = '';
+    } else if (hs && track) {
+      decks.filter(d => d.projects).forEach(d => d.cards.forEach(c => { c.style.transform = ''; c.style.filter = ''; }));
       track.style.transform = '';
       track.scrollLeft = 0;
       // travel from "first card centred" to "last card centred"
@@ -948,15 +984,18 @@
       const lit = Math.floor(prog(wordsScene) * 1.2 * words.length);
       words.forEach((w, i) => w.classList.toggle('on', i < lit));
     }
-    cards.forEach((c, i) => {
-      const next = cards[i + 1];
-      if (!next) return;
-      const stick = parseFloat(getComputedStyle(next).top) || 0;
-      const k = clamp((vh() - next.getBoundingClientRect().top) / (vh() - stick));
-      c.style.transform = `scale(${(1 - k * 0.06).toFixed(3)})`;
-      c.style.filter = `brightness(${(1 - k * 0.45).toFixed(3)})`;
+    decks.forEach(({ cards, projects }) => {
+      if (projects && !mobile.matches) return;
+      cards.forEach((c, i) => {
+        const next = cards[i + 1];
+        if (!next) return;
+        const stick = parseFloat(getComputedStyle(next).top) || 0;
+        const k = clamp((vh() - next.getBoundingClientRect().top) / (vh() - stick));
+        c.style.transform = `scale(${(1 - k * 0.06).toFixed(3)})`;
+        c.style.filter = `brightness(${(1 - k * 0.45).toFixed(3)})`;
+      });
     });
-    if (track) {
+    if (track && !mobile.matches) {
       // brief pause after pinning, slide, brief pause before releasing
       const t = clamp((prog(hs) - 0.1) / 0.8);
       const e = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;   // ease in-out
