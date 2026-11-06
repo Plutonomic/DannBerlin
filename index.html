@@ -260,16 +260,15 @@
     .dock { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
   }
   .dock.dragging { transform: translateX(-50%) scale(1.035); }
-  .dock.dragging .slime {
-    background:
-      radial-gradient(90% 60% at 50% 0%, rgba(255,255,255,.5), transparent 70%),
-      color-mix(in srgb, var(--accent) 30%, rgba(255,255,255,.14));
-    box-shadow:
-      inset 0 1px 1px rgba(255,255,255,.85),
-      inset 0 0 0 1px rgba(255,255,255,.35),
-      inset 0 -3px 8px rgba(0,0,0,.15),
-      0 16px 32px -8px rgba(0,0,0,.55);
-  }
+  /* hold-and-drag lens: a clear liquid-glass drop that floats ABOVE the dock (outside it, so
+     its backdrop sees the icons + page) and refracts/magnifies them like the shader. The
+     engine gives it the displacement filter on Chromium; others get a light clear blur. */
+  .drag-lens { position: fixed; left: 0; top: 0; z-index: 55; pointer-events: none; opacity: 0;
+    width: calc((min(420px, 100vw - 28px) - 16px) / 5 * 1.4); height: 76px; border-radius: 38px;
+    background: rgba(255,255,255,.05);
+    -webkit-backdrop-filter: blur(1.5px) saturate(170%) brightness(1.06);
+    backdrop-filter: blur(1.5px) saturate(170%) brightness(1.06);
+    will-change: transform, opacity; }
   .dock.dragging a.active .lbl { color: var(--text); transform: scale(1.12); }
 
   @media (min-width: 720px) {
@@ -704,6 +703,7 @@
       <span class="lbl">Contact</span></a></li>
   </ul>
 </nav>
+<div class="drag-lens lens" id="dragLens" data-lens data-bevel="14" data-scale="44" data-mag="0.45" data-blur="0.3" aria-hidden="true"></div>
 
 <script>
 /* =======================================================================
@@ -726,7 +726,7 @@
   const defs = document.getElementById('lens-defs');
   let seq = 0;
 
-  function displacementMap(w, h, r, bevel) {
+  function displacementMap(w, h, r, bevel, mag = 0.06) {
     const c = document.createElement('canvas'); c.width = w; c.height = h;
     const ctx = c.getContext('2d'); const img = ctx.createImageData(w, h); const d = img.data;
     const hw = w / 2, hh = h / 2;
@@ -746,7 +746,7 @@
         const t = Math.min(Math.max(1 - depth / bevel, 0), 1);
         const m = t * t * (3 - 2 * t);
         // slight whole-surface magnification toward the centre
-        const mx = -px / hw * 0.06, my = -py / hh * 0.06;
+        const mx = -px / hw * mag, my = -py / hh * mag;
         const dx = -nx * m + mx, dy = -ny * m + my;
         const i = (y * w + x) * 4;
         d[i] = 128 + Math.max(-1, Math.min(1, dx)) * 127;
@@ -764,7 +764,7 @@
     const r = Math.min(parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0, w / 2, h / 2);
     const bevel = +el.dataset.bevel || 16, s = +el.dataset.scale || 40, blur = el.dataset.blur || 2;
     const id = 'lg' + (++seq);
-    const map = displacementMap(w, h, r, bevel);
+    const map = displacementMap(w, h, r, bevel, +el.dataset.mag || 0.06);
     const ch = (k, mtx, res) =>
       `<feDisplacementMap in="soft" in2="map" scale="${(s * k).toFixed(1)}" xChannelSelector="R" yChannelSelector="G" result="d${res}"/>
        <feColorMatrix in="d${res}" type="matrix" values="${mtx}" result="${res}"/>`;
@@ -801,6 +801,7 @@
   const slime = document.getElementById('slime');
   const reduceM = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const dock = list.closest('.dock');
+  const lens = document.getElementById('dragLens');
   let idx = 0, L = null, R = null, vL = 0, vR = 0, running = false;
   let dragging = false, dragX = 0, lift = 0, lock = 0;
 
@@ -823,6 +824,22 @@
     slime.style.left = L + 'px';
     slime.style.width = w + 'px';
     slime.style.transform = `scale(${sx.toFixed(3)}, ${sy.toFixed(3)})`;
+
+    // while lifted, the slime hands over to the floating liquid-glass lens
+    if (lens) {
+      if (lift > 0.01) {
+        const lr = list.getBoundingClientRect();
+        const cx = lr.left + (L + R) / 2, cy = lr.top + lr.height / 2;
+        const lw = lens.offsetWidth, lh = lens.offsetHeight;
+        const k = 0.72 + 0.28 * lift;                              // grows as it lifts
+        const ex = 1 + Math.min(stretch * 0.5, 0.35);              // stretches like goo while moving
+        lens.style.transform =
+          `translate(${(cx - lw / 2).toFixed(1)}px, ${(cy - lh / 2 - lift * 4).toFixed(1)}px) ` +
+          `scale(${(k * ex).toFixed(3)}, ${(k / Math.sqrt(ex)).toFixed(3)})`;
+      }
+      lens.style.opacity = lift.toFixed(3);
+      slime.style.opacity = (1 - lift).toFixed(3);
+    }
   }
   function frame() {
     const [tL, tR] = target(idx);
