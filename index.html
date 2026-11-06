@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Dann Berlin — Applied AI System Engineer</title>
 <meta name="description" content="Dann Berlin — Applied AI Engineer at Exalca Technologies. Building production LLM systems: document understanding, fine-tuning and quantization. B.Tech AI & Data Science, 2026.">
-<meta name="theme-color" content="#120a06">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#120a06" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f4e8da" media="(prefers-color-scheme: light)">
 <script>document.documentElement.classList.add('loading', 'dock-wait');</script>
 <noscript><style>.loader { display: none !important; }</style></noscript>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -47,6 +49,10 @@
     --text-2: #d2b48c;                        /* 8.6:1 on --bg  */
     --accent: #e0ae7c;                        /* 9.4:1 on --bg  */
     --accent-ink: #1a0f08;
+    --orb-a: #c0662a; --orb-b: #6e341a; --orb-c: #f0b67a; --orb-op: .6;
+    --solid-lens: #24170f; --solid-surface: #1d130c;   /* reduced-transparency fallbacks */
+    --ld-bg: #000; --ld-ink: #f7ead8; --ld-glow: 224,174,124;   /* loader */
+    --stack-dim: .45;                                           /* how much buried cards darken */
     --radius-xl: 32px;
     --radius-lg: 24px;
     --spring: cubic-bezier(.2, .9, .25, 1.15);
@@ -65,8 +71,14 @@
       --text-2: #634832;
       --accent: #8a5a2e;
       --accent-ink: #fff8f0;
+      --orb-a: #f2a46a; --orb-b: #d9a07a; --orb-c: #ffd6a8; --orb-op: .55;
+      --solid-lens: #fbf4ec; --solid-surface: #fffaf4;
+      --ld-bg: #fbf7f2; --ld-ink: #2a1a10; --ld-glow: 176,112,58;
+      --stack-dim: .1;
     }
   }
+  :root { color-scheme: dark; }
+  @media (prefers-color-scheme: light) { :root { color-scheme: light; } }
 
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
@@ -102,11 +114,11 @@
      ===================================================================== */
   .ambient { position: fixed; inset: 0; z-index: -2; overflow: hidden;
     background: radial-gradient(120% 80% at 50% -10%, var(--bg-2), var(--bg) 70%); }
-  .orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: .6;
+  .orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: var(--orb-op);
     animation: drift 22s ease-in-out infinite alternate; will-change: transform; }
-  .orb.a { width: 50vmax; height: 50vmax; background: #c0662a; top: -16vmax; left: -14vmax; }
-  .orb.b { width: 42vmax; height: 42vmax; background: #6e341a; bottom: -14vmax; right: -10vmax; animation-delay: -7s; }
-  .orb.c { width: 26vmax; height: 26vmax; background: #f0b67a; top: 38%; left: 58%; opacity: .28; animation-delay: -13s; }
+  .orb.a { width: 50vmax; height: 50vmax; background: var(--orb-a); top: -16vmax; left: -14vmax; }
+  .orb.b { width: 42vmax; height: 42vmax; background: var(--orb-b); bottom: -14vmax; right: -10vmax; animation-delay: -7s; }
+  .orb.c { width: 26vmax; height: 26vmax; background: var(--orb-c); top: 38%; left: 58%; opacity: .28; animation-delay: -13s; }
   @keyframes drift { to { transform: translate3d(5vmax, 4vmax, 0) scale(1.1); } }
 
   /* film grain: kills gradient banding, adds tactility */
@@ -179,7 +191,7 @@
   .brand .me { position: relative; width: 24px; height: 24px; flex: none; }
   .brand .me img { display: block; width: 24px; height: 24px; border-radius: 50%; }
   .brand .dot { position: absolute; right: -1px; bottom: -1px; width: 8px; height: 8px; border-radius: 50%;
-    background: #5ee08a; box-shadow: 0 0 0 2px #120a06, 0 0 8px #5ee08a; }
+    background: #5ee08a; box-shadow: 0 0 0 2px var(--bg), 0 0 8px #5ee08a; }
   .brand small { font-weight: 500; color: var(--text-2); }
 
   /* =====================================================================
@@ -390,16 +402,24 @@
   .pcard .num { font-size: clamp(56px, 8vw, 88px); line-height: .9; color: color-mix(in srgb, var(--accent) 55%, transparent); margin-bottom: 18px; }
   .h-more { width: min(1000px, 100% - 32px); margin: 4px auto 0; }
 
-  /* mobile: projects become a vertical deck (like Experience); PC keeps the sideways carousel */
+  /* mobile: projects are a swipe carousel — sideways swipe = next card, vertical = page.
+     Auto-advances (JS), pauses while touched. PC keeps the pinned sideways scroll. */
+  .dots { display: none; }
   @media (max-width: 719px) {
     .hscroll { height: auto !important; }
-    .hpin, .motion .hpin { position: static; height: auto; overflow: visible; width: auto; margin-left: 0; padding: 104px 0 24px; }
-    .h-head, .h-more { width: auto; }
-    .track, .motion .track { flex-direction: column; gap: 22px; overflow: visible; padding: 6px 0 22px; transform: none !important; }
-    .pcard { flex: none; width: 100%; }
-    .motion .track .pcard { position: sticky; top: calc(84px + var(--i, 0) * 14px); transform-origin: 50% 0;
-      background: linear-gradient(180deg, color-mix(in srgb, var(--bg-2) 100%, #fff 3%), var(--bg-2)); -webkit-backdrop-filter: none; backdrop-filter: none;
-      will-change: transform, filter; }
+    .hpin, .motion .hpin { position: static; height: auto; overflow: visible; width: 100vw; padding: 104px 0 24px; }
+    .track, .motion .track { flex-direction: row; gap: 12px; transform: none !important;
+      overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; touch-action: pan-x pan-y;
+      scroll-snap-type: x mandatory; scroll-padding-inline: 16px; padding: 6px 16px 18px; }
+    .pcard { flex: 0 0 84vw; scroll-snap-align: center; scroll-snap-stop: always; }
+    .pcard { transition: transform .5s cubic-bezier(.22,1,.36,1), opacity .5s; }
+    .pcard:not(.is-on) { transform: scale(.94); opacity: .55; }
+    .dots { display: flex; justify-content: center; gap: 7px; margin: 2px 0 8px; }
+    .dots button { width: 7px; height: 7px; padding: 0; border: 0; border-radius: 999px; cursor: pointer;
+      background: color-mix(in srgb, var(--text-2) 40%, transparent); transition: width .45s cubic-bezier(.22,1,.36,1), background .3s; }
+    .dots button[aria-current="true"] { width: 22px; background: var(--accent); }
+    .dots button::after { content: ""; position: absolute; inset: -10px; }   /* bigger touch target */
+    .dots button { position: relative; }
   }
 
   /* 5 · contact zooms in */
@@ -415,8 +435,8 @@
   }
   @media (prefers-reduced-transparency: reduce) {
     .lens, .surface, .edge { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
-    .lens { background: #24170f; }
-    .surface { background: #1d130c; }
+    .lens { background: var(--solid-lens); }
+    .surface { background: var(--solid-surface); }
     .edge { display: none; }
   }
   @media (prefers-contrast: more) {
@@ -435,7 +455,7 @@
 
   .loader { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; }
   .loader.out { pointer-events: none; }
-  .ld-bg { position: absolute; inset: 0; background: #000;
+  .ld-bg { position: absolute; inset: 0; background: var(--ld-bg);
     transition: opacity .9s cubic-bezier(.22,1,.36,1); }
   .ld-glow { position: absolute; width: 46vmax; height: 46vmax; border-radius: 50%; filter: blur(90px); opacity: .35;
     background: #c0662a; animation: ld-breathe 5s ease-in-out infinite; transition: opacity .9s; }
@@ -446,16 +466,16 @@
   /* handwritten signature, iOS "hello" style: a pen sweeps left→right, the
      stroke draws, then the ink fills in with a warm glow */
   .ld-sign { width: min(80vw, 640px); height: auto; overflow: visible;
-    filter: drop-shadow(0 0 18px rgba(224,174,124,.35));
+    filter: drop-shadow(0 0 18px rgba(var(--ld-glow),.35));
     transition: opacity .9s cubic-bezier(.22,1,.36,1), transform 1s cubic-bezier(.22,1,.36,1), filter .9s; }
   /* one continuous pen line (single-stroke script); JS sets the dash to its real length */
-  .ld-sign path { fill: none; stroke: #f7ead8; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round;
+  .ld-sign path { fill: none; stroke: var(--ld-ink); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round;
     stroke-dasharray: 0 99999; }
   /* strokes are written one after another by JS (Web Animations); glow once the pen lifts */
   .loader.go .ld-sign { animation: ld-glow 1.2s ease 3.1s forwards; }
-  @keyframes ld-glow { to { filter: drop-shadow(0 0 22px rgba(224,174,124,.65)); } }
+  @keyframes ld-glow { to { filter: drop-shadow(0 0 22px rgba(var(--ld-glow),.65)); } }
 
-  .loader.done .ld-sign { opacity: 0; transform: translateY(-14px) scale(1.04); filter: blur(10px) drop-shadow(0 0 18px rgba(224,174,124,0)); }
+  .loader.done .ld-sign { opacity: 0; transform: translateY(-14px) scale(1.04); filter: blur(10px) drop-shadow(0 0 18px rgba(var(--ld-glow),0)); }
 
   @media (prefers-reduced-motion: reduce) {
     .ld-sign path { stroke-dasharray: none !important; }
@@ -640,6 +660,7 @@
           <div><dt>Context</dt><dd>College project, Loyola Institute of Technology and Science.</dd></div>
         </dl></article>
     </div>
+    <div class="dots" role="tablist" aria-label="Choose project"></div>
     <p class="h-more"><a class="btn ghost" href="https://github.com/Plutonomic" target="_blank" rel="noopener noreferrer">More on GitHub</a></p>
    </div>
   </section>
@@ -956,6 +977,10 @@
     return { el, cards: cs, projects: el === track };
   });
   let dist = 0;
+  let dim = .45;
+  const readTheme = () => { dim = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--stack-dim')) || .45; };
+  readTheme();
+  matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => { readTheme(); update(); });
 
   function layout() {
     if (hs && track && mobile.matches) {
@@ -985,14 +1010,14 @@
       words.forEach((w, i) => w.classList.toggle('on', i < lit));
     }
     decks.forEach(({ cards, projects }) => {
-      if (projects && !mobile.matches) return;
+      if (projects) return;                    // projects: sideways on every screen size
       cards.forEach((c, i) => {
         const next = cards[i + 1];
         if (!next) return;
         const stick = parseFloat(getComputedStyle(next).top) || 0;
         const k = clamp((vh() - next.getBoundingClientRect().top) / (vh() - stick));
         c.style.transform = `scale(${(1 - k * 0.06).toFixed(3)})`;
-        c.style.filter = `brightness(${(1 - k * 0.45).toFixed(3)})`;
+        c.style.filter = `brightness(${(1 - k * dim).toFixed(3)})`;
       });
     });
     if (track && !mobile.matches) {
@@ -1082,6 +1107,60 @@
     await wait(900);
     loader.remove();
   }
+})();
+
+/* =======================================================================
+   MOBILE PROJECT CAROUSEL — swipe sideways, dots, gentle auto-advance.
+   Auto-advance runs only while the carousel is on screen, pauses for a
+   while after any touch, and is off under reduced motion.
+   ======================================================================= */
+(() => {
+  const track = document.querySelector('#projects .track');
+  const dotsEl = document.querySelector('#projects .dots');
+  if (!track || !dotsEl) return;
+  const mobile = matchMedia('(max-width: 719px)');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const cards = [...track.querySelectorAll('.pcard')];
+  const DELAY = 4200, RESUME_AFTER = 7000;
+  let current = 0, visible = false, pausedUntil = 0, timer = 0;
+
+  dotsEl.innerHTML = cards.map((c, i) =>
+    `<button type="button" role="tab" aria-label="Project ${i + 1}: ${c.querySelector('h3').textContent}"></button>`).join('');
+  const dots = [...dotsEl.children];
+
+  const centreOf = c => c.offsetLeft + c.offsetWidth / 2 - track.clientWidth / 2;
+  function go(i, smooth = true) {
+    current = (i + cards.length) % cards.length;
+    track.scrollTo({ left: centreOf(cards[current]), behavior: smooth && !reduce ? 'smooth' : 'auto' });
+  }
+  function mark() {
+    if (!mobile.matches) { cards.forEach(c => c.classList.remove('is-on')); return; }
+    const mid = track.scrollLeft + track.clientWidth / 2;
+    let best = 0, bestD = Infinity;
+    cards.forEach((c, i) => { const d = Math.abs(c.offsetLeft + c.offsetWidth / 2 - mid); if (d < bestD) { bestD = d; best = i; } });
+    current = best;
+    cards.forEach((c, i) => c.classList.toggle('is-on', i === best));
+    dots.forEach((d, i) => d.setAttribute('aria-current', i === best ? 'true' : 'false'));
+  }
+  const hold = () => { pausedUntil = performance.now() + RESUME_AFTER; };
+
+  let raf = 0;
+  track.addEventListener('scroll', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(mark); }, { passive: true });
+  ['pointerdown', 'touchstart', 'wheel'].forEach(ev => track.addEventListener(ev, hold, { passive: true }));
+  dots.forEach((d, i) => d.addEventListener('click', () => { hold(); go(i); }));
+
+  new IntersectionObserver(([e]) => {
+    if (e.isIntersecting && !visible) start();          // fresh full delay when it comes into view
+    visible = e.isIntersecting;
+  }, { threshold: 0.6 }).observe(track);
+
+  function tick() {
+    if (mobile.matches && visible && !reduce && !document.hidden && performance.now() > pausedUntil) go(current + 1);
+  }
+  function start() { clearInterval(timer); if (!reduce) timer = setInterval(tick, DELAY); }
+  mobile.addEventListener('change', () => { track.scrollLeft = 0; mark(); start(); });
+  addEventListener('resize', mark);
+  requestAnimationFrame(() => { mark(); start(); });
 })();
 </script>
 </body>
