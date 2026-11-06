@@ -8,7 +8,14 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#120a06" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#f4e8da" media="(prefers-color-scheme: light)">
-<script>document.documentElement.classList.add('loading', 'dock-wait');</script>
+<script>
+  document.documentElement.classList.add('loading', 'dock-wait');
+  // Always open on Home: no restored scroll position, no leftover #section in the URL.
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+  addEventListener('DOMContentLoaded', () => scrollTo(0, 0));
+  addEventListener('pageshow', () => scrollTo(0, 0));
+</script>
 <noscript><style>.loader { display: none !important; }</style></noscript>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -234,7 +241,8 @@
   .dock a:active { transform: scale(.9); }
   .dock a:hover { color: var(--text); }
   .dock a:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-  .dock svg { grid-area: 1 / 1; width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.7;
+  .dock ul a { opacity: var(--icons, 1); }   /* real icons hand over to the lens canvas during a glide/drag */
+  .dock svg { grid-area: 1 / 1; width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.7;
     stroke-linecap: round; stroke-linejoin: round;
     transition: opacity .55s cubic-bezier(.4,0,.2,1), transform .8s cubic-bezier(.22,1,.36,1), filter .55s ease; }
   .dock .lbl { grid-area: 1 / 1; font-size: 13.5px; font-weight: 650; letter-spacing: -.01em; color: var(--text);
@@ -246,20 +254,18 @@
   .dock svg.on { fill: currentColor; opacity: 0; transform: scale(.6); }
   .dock svg.on .line { fill: none; }
   .dock svg.on .cut { fill: none; stroke: var(--bg); stroke-width: 1.8; }
-  @media (max-width: 719px) {
-    .dock ul a.active .lbl { opacity: 0; transform: scale(.6); }
-    .dock ul a.active svg.on { opacity: 1; transform: none; filter: none; color: var(--text); }
-  }
+  /* every screen: the active tab shows its filled icon (Instagram-style); words stay for screen readers */
+  .dock ul a.active .lbl { opacity: 0; transform: scale(.6); }
+  .dock ul a.active svg.on { opacity: 1; transform: none; filter: none; color: var(--text); }
   /* active: the symbol dissolves, the word pops in */
   .dock a.active svg { opacity: 0; transform: scale(.5); }
   .dock a.active .lbl { opacity: 1; transform: scale(1); }
 
   /* hold-and-drag (touch only): dock swells, slime lifts into a clear glass bubble */
   .dock { transition: transform .45s var(--spring); }
-  @media (pointer: coarse) {
-    .dock { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
-    .dock a, .dock svg { -webkit-user-drag: none; -webkit-touch-callout: none; }
-  }
+  .dock { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  .dock a, .dock svg { -webkit-user-drag: none; -webkit-touch-callout: none; }
+  @media (pointer: fine) { .dock.dragging, .dock.dragging a { cursor: grabbing; } }
   .dock.dragging { transform: translateX(-50%) scale(1.035); }
   /* hold-and-drag lens: a clear liquid-glass drop that floats ABOVE the dock (outside it, so
      its backdrop sees the icons + page) and refracts/magnifies them like the shader. The
@@ -373,6 +379,11 @@
 
   /* 2 · statement lights up word by word */
   .motion .words-scene { height: 260vh; }
+  /* phones: shorter, even scroll per scene so each section takes about the same thumb travel */
+  @media (max-width: 719px) {
+    .motion .hero-scene { height: 135vh; }
+    .motion .words-scene { height: 165vh; }
+  }
   .statement { font-size: clamp(34px, 6.2vw, 78px); line-height: 1.06; letter-spacing: -.015em; color: var(--text);
     max-width: 920px; margin: 0 auto; text-align: center; }
   .statement em { color: var(--accent); }
@@ -835,7 +846,6 @@
 const glLens = (() => {
   const cv = document.getElementById('dragGL');
   if (!cv) return { ok: false, reason: 'no #dragGL canvas' };
-  if (!matchMedia('(pointer: coarse)').matches) return { ok: false, reason: 'not a touch screen (pointer: coarse = false)' };
   const gl = cv.getContext('webgl', { premultipliedAlpha: true, alpha: true, antialias: false });
   if (!gl) return { ok: false, reason: 'WebGL unavailable (blocked or unsupported)' };
 
@@ -859,14 +869,14 @@ const glLens = (() => {
       float r = uHalf.y;
       vec2 q = abs(p) - vec2(uHalf.x - r, 0.0);
       float d = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;   // pill SDF, < 0 inside
-      if (d > 1.0) { gl_FragColor = vec4(0.0); return; }
+      if (d > 1.0) { gl_FragColor = tap(gl_FragCoord.xy); return; }   // outside: icons as they are
       float aa = clamp(0.5 - d, 0.0, 1.0);                              // smooth antialiased edge
 
       // refraction: centre magnified, light bends inward near the rim (same idea as the shader's lens term)
       float edge = clamp(1.0 + d / (r * 0.95), 0.0, 1.0);               // 0 centre -> 1 rim
       float bend = edge * edge * edge;
-      float k = 0.8 - 0.38 * bend;
-      float ca = 0.035 * bend;                                          // chromatic split at the rim
+      float k = 0.82 - 0.3 * bend;                                    // liquid look: centre magnified, light bends inward at the rim                                    // gentler: icons stay intact
+      float ca = 0.016 * bend;                                          // chromatic split at the rim
       vec4 cr = tap(uMouse + p * (k - ca));
       vec4 cg = tap(uMouse + p * k);
       vec4 cb = tap(uMouse + p * (k + ca));
@@ -887,7 +897,7 @@ const glLens = (() => {
       col += vec4(light);
       col.rgb *= (1.0 - shade);
       col.a = max(col.a, shade);
-      gl_FragColor = clamp(col, 0.0, 1.0) * aa;
+      gl_FragColor = mix(tap(gl_FragCoord.xy), clamp(col, 0.0, 1.0), aa);
     }`;
   let shaderLog = '';
   const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
@@ -944,6 +954,13 @@ const glLens = (() => {
     sx.setTransform(1, 0, 0, 1, 0, 0); sx.clearRect(0, 0, snap.width, snap.height);
     sx.setTransform(dpr, 0, 0, dpr, 0, 0);
     parts.forEach(({ img, r }) => sx.drawImage(img, r.left - ox, r.top - oy, r.width, r.height));
+    dock.querySelectorAll('.lbl').forEach(l => {
+      const c = getComputedStyle(l); if (parseFloat(c.opacity) < 0.5) return;
+      const r = l.getBoundingClientRect();
+      sx.font = `${c.fontWeight} ${c.fontSize} ${c.fontFamily}`; sx.fillStyle = c.color;
+      sx.textAlign = 'center'; sx.textBaseline = 'middle';
+      sx.fillText(l.textContent, r.left - ox + r.width / 2, r.top - oy + r.height / 2);
+    });
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
@@ -951,7 +968,7 @@ const glLens = (() => {
     ready = true;
   }
   function draw(cx, cy, hw, hh, alpha) {
-    if (!ready || alpha < 0.01) { cv.style.opacity = 0; return; }
+    if (!ready || alpha < 0.01) { cv.style.opacity = 0; return false; }
     cv.style.opacity = alpha.toFixed(3);
     gl.viewport(0, 0, cv.width, cv.height);
     gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
@@ -960,6 +977,7 @@ const glLens = (() => {
     gl.uniform2f(uHalf, hw * dpr, hh * dpr);
     gl.uniform1f(uGlow, lightMQ.matches ? 0.55 : 1.0);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    return true;
   }
   return { ok: true, reason: 'ok', place, snapshot, draw, hide: () => { cv.style.opacity = 0; } };
 })();
@@ -975,6 +993,7 @@ const glLens = (() => {
   const reduceM = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const dock = list.closest('.dock');
   const lens = document.getElementById('dragLens');
+  let lastSnap = 0;
   let idx = 0, L = null, R = null, vL = 0, vR = 0, running = false;
   let dragging = false, dragX = 0, lift = 0, lock = 0;
 
@@ -1000,21 +1019,31 @@ const glLens = (() => {
 
     // while lifted, the slime hands over to the floating liquid-glass lens
     if (glLens.ok) {                                              // WebGL glass lens
+      // quick, clean hand-off: the slime disappears early, the lens arrives early (no double pill)
+      const show = Math.min(1, lift * 1.8);
       if (lift > 0.01) {
         const lr = list.getBoundingClientRect();
-        const cx = lr.left + (L + R) / 2, cy = lr.top + lr.height / 2 - lift * 3;
-        const k = 0.75 + 0.25 * lift, ex = 1 + Math.min(stretch * 0.5, 0.35);
-        const hw = cell() * 0.68 * k * ex, hh = (lr.height / 2 + 6) * k / Math.sqrt(ex);
-        glLens.draw(cx, cy, hw, hh, lift);
-        const mx = (cx - lr.left).toFixed(1), my = (cy - lr.top).toFixed(1);
-        const m = `radial-gradient(ellipse ${(hw - 2).toFixed(1)}px ${(hh - 2).toFixed(1)}px at ${mx}px ${my}px, transparent ${Math.round(lift * 96)}%, #000 100%)`;
-        list.style.webkitMaskImage = list.style.maskImage = m;
-      } else { glLens.hide(); list.style.webkitMaskImage = list.style.maskImage = ''; }
-      slime.style.opacity = (1 - lift).toFixed(3);
+        const k = 0.8 + 0.2 * show, ex = 1 + Math.min(stretch * 0.4, 0.25);
+        const sc = lr.width / list.clientWidth;          // dock is scaled while dragging: map layout px -> screen px
+        const hw = cell() * sc * 0.6 * k * ex, hh = (lr.height / 2 + 3) * k / Math.sqrt(ex);
+        // keep the whole lens inside the dock (it used to spill past the rounded ends)
+        const inset = 4;
+        let cx = lr.left + (L + R) / 2 * sc;
+        cx = Math.max(lr.left + hw - inset, Math.min(lr.right - hw + inset, cx));
+        const cy = lr.top + lr.height / 2;
+        // keep the lens texture in sync with the icons while it's up (throttled)
+        const now = performance.now();
+        if (now - lastSnap > 140) { lastSnap = now; glLens.snapshot(dock); }
+        const drawn = glLens.draw(cx, cy, hw, hh, show);
+        // while the lens is up the canvas draws every dock icon (plain outside, refracted inside);
+        // the real icons fade out underneath, so each icon only ever appears once
+        list.style.setProperty('--icons', drawn ? (1 - show).toFixed(3) : '1');
+      } else { glLens.hide(); list.style.removeProperty('--icons'); }
+      slime.style.opacity = Math.max(0, 1 - lift * 2.2).toFixed(3);
     } else if (lens) {                                            // CSS/SVG fallback lens
       if (lift > 0.01) {
         const lr = list.getBoundingClientRect();
-        const cx = lr.left + (L + R) / 2, cy = lr.top + lr.height / 2;
+        const cx = lr.left + (L + R) / 2 * (lr.width / list.clientWidth), cy = lr.top + lr.height / 2;
         const lw = lens.offsetWidth, lh = lens.offsetHeight;
         const k = 0.72 + 0.28 * lift;                              // grows as it lifts
         const ex = 1 + Math.min(stretch * 0.5, 0.35);              // stretches like goo while moving
@@ -1035,7 +1064,10 @@ const glLens = (() => {
     vL = (vL + (tL - L) * (right ? kTrail : kLead)) * damp;
     vR = (vR + (tR - R) * (right ? kLead : kTrail)) * damp;
     L += vL; R += vR;
-    const liftTarget = dragging ? 1 : 0;
+    // drag = fully lifted lens; gliding between tabs (scroll / tap) = lens lifts in proportion
+    // to how far the slime still has to travel, then melts back into the slime as it settles
+    const travel = Math.abs((tL + tR) / 2 - (L + R) / 2);
+    const liftTarget = dragging ? 1 : (reduceM ? 0 : Math.min(travel / (cell() * 0.35), 1) * 0.92);
     lift += (liftTarget - lift) * 0.18;
     paint();
     const settling = Math.abs(tL - L) + Math.abs(tR - R) + Math.abs(vL) + Math.abs(vR) > 0.15 || Math.abs(lift - liftTarget) > 0.005;
@@ -1046,6 +1078,10 @@ const glLens = (() => {
   function move(i, snap) {
     idx = i;
     if (L === null || snap || reduceM) { [L, R] = target(i); paint(); return; }
+    if (glLens.ok && !dragging) {                 // paint the dock for the lens, then again once icons/labels settle
+      glLens.place(dock.getBoundingClientRect());
+      glLens.snapshot(dock); setTimeout(() => glLens.snapshot(dock), 650);
+    }
     kick();
   }
   function mark(i) {
@@ -1065,7 +1101,6 @@ const glLens = (() => {
     lock = performance.now() + 1400;          // don't let the scroll spy drag the slime through every section
     setActive(id, true);
     document.getElementById(id).scrollIntoView({ behavior: reduceM ? 'auto' : 'smooth' });
-    history.replaceState(null, '', '#' + id);
   }
 
   // Scroll spy: section crossing the middle band of the viewport wins.
@@ -1077,7 +1112,7 @@ const glLens = (() => {
   requestAnimationFrame(() => move(0, true));
 
   /* ---- iOS-style hold & drag — touch screens only ---- */
-  if (matchMedia('(pointer: coarse)').matches) {
+  {                                                     // hold & drag: touch AND mouse
     let holdT = 0, startX = 0, pid = null, suppress = false, peek = -1;
     const xIn = e => e.clientX - list.getBoundingClientRect().left;
     const under = () => clampIdx(Math.floor(dragX / cell()));
@@ -1094,7 +1129,7 @@ const glLens = (() => {
       mark(peek); kick();
     };
     list.addEventListener('pointerdown', e => {
-      if (e.pointerType === 'mouse') return;
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
       pid = e.pointerId; startX = e.clientX; dragX = xIn(e); suppress = false;
       holdT = setTimeout(begin, 220);                       // press and hold…
     });
